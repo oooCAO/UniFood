@@ -103,7 +103,7 @@ a:focus-visible {
   color: var(--color-on-primary);
 }
 
-/* === Locations grid (desktop: 3 columns) === */
+/* === Locations grid (desktop: Grid, 3 columns) === */
 .locations-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -193,17 +193,19 @@ a:focus-visible {
   text-align: center;
 }
 
-/* === Tablet (<= 1024px): 2 columns === */
+/* === Tablet (<= 1024px): Grid, 2 columns === */
 @media (max-width: 1024px) {
   .locations-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-/* === Mobile (< 600px): 1 column === */
+/* === Mobile (< 600px): Flexbox, cards in one column === */
 @media (max-width: 599px) {
   .locations-grid {
-    grid-template-columns: 1fr;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
   }
 
   .site-header {
