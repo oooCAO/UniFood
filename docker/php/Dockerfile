@@ -10,10 +10,14 @@ WORKDIR /var/www/html
 
 # $PHPIZE_DEPS нужен, чтобы собрать расширение mongodb через pecl (там компилятор,
 # phpize и заголовки). pkg-config подключаем отдельно: pecl ищет его при сборке.
+# libzip-dev нужен расширению zip — без него Composer не умеет распаковывать
+# скачанные архивы пакетов.
+# libssl-dev нужен драйверу MongoDB: без OpenSSL он не умеет авторизацию
+# SCRAM, и подключение к базе с паролем падает.
 # После установки пакеты сборки удаляем, чтобы образ не распухал.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends $PHPIZE_DEPS pkg-config \
-    && docker-php-ext-install pdo_mysql \
+    && apt-get install -y --no-install-recommends $PHPIZE_DEPS pkg-config libzip-dev libssl-dev \
+    && docker-php-ext-install pdo_mysql zip \
     && pecl install mongodb \
     && docker-php-ext-enable mongodb \
     && apt-get purge -y --auto-remove $PHPIZE_DEPS \

@@ -8,6 +8,10 @@
 
 require_once __DIR__ . '/config.php';
 
+// Классы библиотеки mongodb/mongodb подключает автозагрузчик Composer.
+// Папка vendor/ появляется после `docker compose exec web composer install`.
+require_once __DIR__ . '/../vendor/autoload.php';
+
 /**
  * Возвращает базу MongoDB для работы с коллекциями.
  *
