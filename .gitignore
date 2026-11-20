@@ -1,1 +1,12 @@
+# Локальные настройки с паролями — у каждого разработчика свои.
+.env
+
+# Зависимости Composer: ставятся командой docker compose exec web composer install.
+/vendor/
+
+# Служебные файлы macOS.
 .DS_Store
+
+# Настройки редакторов.
+.idea/
+.vscode/
