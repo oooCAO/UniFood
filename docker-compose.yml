@@ -1,0 +1,71 @@
+# Локальное окружение UniFood: веб-сервер с PHP, MySQL и MongoDB.
+# Все имена баз и пароли берутся из .env, в этом файле секретов нет.
+# Порты на хосте задаются переменными, чтобы можно было обойти занятые порты.
+
+services:
+  # PHP + Apache. Корень сайта — public/, исходники src/ лежат рядом.
+  web:
+    build:
+      context: .
+      dockerfile: docker/php/Dockerfile
+    # Слева порт на компьютере, справа — порт внутри контейнера (он всегда 80).
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    # Монтируем только папки с кодом: правки сразу видны в контейнере,
+    # пересобирать образ при изменении PHP-файлов не нужно.
+    volumes:
+      - ./public:/var/www/html/public
+      - ./src:/var/www/html/src
+      - ./composer.json:/var/www/html/composer.json
+    # PHP читает настройки подключения из переменных окружения (src/config.php).
+    # Значения собираем из .env, чтобы не дублировать пароли в нескольких местах.
+    environment:
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_NAME: "${MYSQL_DATABASE}"
+      DB_USER: "${MYSQL_USER}"
+      DB_PASSWORD: "${MYSQL_PASSWORD}"
+      MONGO_HOST: mongo
+      MONGO_DB_PORT: "27017"
+      MONGO_DB_NAME: "${MONGO_INITDB_DATABASE}"
+      MONGO_USER: "${MONGO_INITDB_ROOT_USERNAME}"
+      MONGO_PASSWORD: "${MONGO_INITDB_ROOT_PASSWORD}"
+    # Ждём запуска баз, чтобы health.php не падал на первом запросе.
+    depends_on:
+      - mysql
+      - mongo
+
+  # MySQL 8: реляционные данные (пользователи, заказы, меню).
+  mysql:
+    image: mysql:8
+    ports:
+      # Снаружи порт можно поменять, внутри контейнера MySQL всегда слушает 3306.
+      - "${MYSQL_PORT:-3306}:3306"
+    environment:
+      MYSQL_DATABASE: "${MYSQL_DATABASE}"
+      MYSQL_USER: "${MYSQL_USER}"
+      MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+    volumes:
+      # Данные храним в именованном томе, чтобы они не пропадали при перезапуске.
+      - mysql_data:/var/lib/mysql
+      # SQL-скрипты из этой папки MySQL выполняет один раз при пустой базе.
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+
+  # MongoDB 7: нереляционные данные (например, отзывы и логи).
+  mongo:
+    image: mongo:7
+    ports:
+      - "${MONGO_PORT:-27017}:27017"
+    environment:
+      # При первом запуске образ создаёт root-пользователя и базу приложения.
+      MONGO_INITDB_ROOT_USERNAME: "${MONGO_INITDB_ROOT_USERNAME}"
+      MONGO_INITDB_ROOT_PASSWORD: "${MONGO_INITDB_ROOT_PASSWORD}"
+      MONGO_INITDB_DATABASE: "${MONGO_INITDB_DATABASE}"
+    volumes:
+      - mongo_data:/data/db
+
+# Именованные тома Docker хранит у себя, на диск проекта они не попадают.
+volumes:
+  mysql_data:
+  mongo_data:
