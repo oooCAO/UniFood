@@ -3,6 +3,11 @@
 -- Пароль у всех тестовых пользователей один: Test1234! (хеш ниже — bcrypt от него,
 -- сам пароль не хранится и нужен только для входа при проверке в Docker).
 
+-- Без этой строки MySQL при первом запуске читает файл как latin1, и кириллица
+-- в названиях заведений, категорий и блюд превращается в "мусор" (проверено:
+-- без SET NAMES кириллица бьётся даже при is_active = 1 у всех строк).
+SET NAMES utf8mb4;
+
 INSERT INTO users (email, password_hash, full_name, role) VALUES
     ('student@unifood.test', '$2y$10$N1FOMTNPXELaQy90mtTlqON4NOmhJaDRBFFG1qSdedQ53GUf3SOYS', 'Тестовый Студент', 'student'),
     ('staff@unifood.test', '$2y$10$N1FOMTNPXELaQy90mtTlqON4NOmhJaDRBFFG1qSdedQ53GUf3SOYS', 'Тестовый Сотрудник', 'staff'),
