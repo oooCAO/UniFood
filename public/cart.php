@@ -8,7 +8,7 @@
  */
 
 require_once __DIR__ . '/../src/auth.php';
-require_once __DIR__ . '/../src/cart.php';
+require_once __DIR__ . '/../src/order.php';
 
 // Корзина есть только у вошедшего пользователя, гостя отправляем на вход.
 requireLogin();
@@ -56,6 +56,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $cart = getCart();
+
+// Названия и цены берём из БД: в сессии хранятся только id и количество.
+$cartItems = getOrderItemsDetails($cart);
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -78,13 +81,26 @@ $cart = getCart();
     <table>
         <tr>
             <th>Блюдо</th>
+            <th>Цена</th>
             <th>Количество</th>
             <th>Действия</th>
         </tr>
         <?php foreach ($cart as $dishId => $quantity): ?>
+            <?php $dish = $cartItems[(int) $dishId] ?? null; ?>
             <tr>
-                <!-- Названия и цены появятся, когда Разработчик 2 добавит таблицу dishes. -->
-                <td>Блюдо №<?= (int) $dishId ?></td>
+                <td>
+                    <?php if ($dish === null): ?>
+                        Блюдо №<?= (int) $dishId ?> (уже нет в меню)
+                    <?php else: ?>
+                        <?= htmlspecialchars($dish['name']) ?>
+                        <?php if ((int) $dish['is_available'] !== 1): ?>
+                            (сейчас недоступно)
+                        <?php endif; ?>
+                    <?php endif; ?>
+                </td>
+                <td>
+                    <?= $dish === null ? '—' : number_format((float) $dish['price'], 2, '.', '') ?>
+                </td>
                 <td>
                     <form method="post" action="/cart.php">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
@@ -107,8 +123,6 @@ $cart = getCart();
     </table>
 
     <p><a href="/order.php">Оформить заказ</a></p>
-
-    <p>Названия и цены блюд появятся после подключения таблицы dishes.</p>
 <?php endif; ?>
 
 <p><a href="/">На главную</a></p>

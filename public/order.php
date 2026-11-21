@@ -74,6 +74,33 @@ $slots = getAvailableSlots();
 // чтобы ему не приходилось выбирать заведение и время заново.
 $selectedVenueId = (int) ($_POST['venue_id'] ?? 0);
 $selectedSlotId = (int) ($_POST['slot_id'] ?? 0);
+
+// Заранее проверяем состав корзины, чтобы не показывать кнопку оформления,
+// если createOrder() всё равно откажет: с недоступным блюдом или
+// с блюдами из разных заведений заказ оформить нельзя.
+$cartVenueIds = [];
+$cartHasUnavailable = false;
+
+foreach ($cart as $dishId => $quantity) {
+    $dish = $cartItems[(int) $dishId] ?? null;
+
+    if ($dish === null || (int) $dish['is_available'] !== 1) {
+        $cartHasUnavailable = true;
+        continue;
+    }
+
+    $cartVenueIds[(int) $dish['venue_id']] = true;
+}
+
+$cartHasMixedVenues = count($cartVenueIds) > 1;
+
+// Если все блюда из одного заведения, подставляем его в форму:
+// так пользователю реже приходится получать ошибку про другое заведение.
+if ($selectedVenueId === 0 && count($cartVenueIds) === 1) {
+    $selectedVenueId = (int) array_key_first($cartVenueIds);
+}
+
+$canSubmitOrder = !empty($cart) && !$cartHasUnavailable && !$cartHasMixedVenues;
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -146,7 +173,12 @@ $selectedSlotId = (int) ($_POST['slot_id'] ?? 0);
                         <td><?= (int) $quantity ?></td>
                         <td>—</td>
                     <?php else: ?>
-                        <td><?= htmlspecialchars($dish['name']) ?></td>
+                        <td>
+                            <?= htmlspecialchars($dish['name']) ?>
+                            <?php if ((int) $dish['is_available'] !== 1): ?>
+                                (сейчас недоступно)
+                            <?php endif; ?>
+                        </td>
                         <td><?= number_format((float) $dish['price'], 2, '.', '') ?></td>
                         <td><?= (int) $quantity ?></td>
                         <?php
@@ -161,6 +193,15 @@ $selectedSlotId = (int) ($_POST['slot_id'] ?? 0);
 
         <p><strong>Итого: <?= number_format($total, 2, '.', '') ?></strong></p>
 
+        <?php if ($cartHasMixedVenues): ?>
+            <p>В корзине блюда из разных заведений. Одним заказом их забрать нельзя: удалите лишние блюда в корзине.</p>
+        <?php endif; ?>
+
+        <?php if ($cartHasUnavailable): ?>
+            <p>В корзине есть недоступные блюда. Удалите их в корзине, чтобы оформить заказ.</p>
+        <?php endif; ?>
+
+        <?php if ($canSubmitOrder): ?>
         <form method="post" action="/order.php">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
 
@@ -213,6 +254,7 @@ $selectedSlotId = (int) ($_POST['slot_id'] ?? 0);
 
             <button type="submit">Оформить заказ</button>
         </form>
+        <?php endif; ?>
 
         <p><a href="/cart.php">Вернуться в корзину</a></p>
     <?php endif; ?>
