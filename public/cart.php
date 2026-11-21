@@ -106,6 +106,8 @@ $cart = getCart();
         <?php endforeach; ?>
     </table>
 
+    <p><a href="/order.php">Оформить заказ</a></p>
+
     <p>Названия и цены блюд появятся после подключения таблицы dishes.</p>
 <?php endif; ?>
 
