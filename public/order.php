@@ -1,0 +1,221 @@
+<?php
+/**
+ * Страница оформления заказа.
+ *
+ * Показывает состав корзины с названиями и ценами из базы, даёт выбрать
+ * заведение и слот получения и создаёт заказ. После успеха страница
+ * перезагружается с ?success=<id заказа> и показывает подтверждение,
+ * чтобы обновление страницы не оформляло заказ второй раз.
+ *
+ * Сама логика работы с заказом лежит в src/order.php.
+ */
+
+require_once __DIR__ . '/../src/auth.php';
+require_once __DIR__ . '/../src/order.php';
+
+// Заказ оформляет только вошедший студент, гостю отвечаем 401 как в cart.php.
+requireLogin();
+
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!checkCsrfToken($_POST['csrf_token'] ?? null)) {
+        $error = 'Форма устарела. Обновите страницу и попробуйте снова.';
+    } else {
+        $venueId = (int) ($_POST['venue_id'] ?? 0);
+        $slotId = (int) ($_POST['slot_id'] ?? 0);
+
+        $result = createOrder((int) $_SESSION['user_id'], $venueId, $slotId, getCart());
+
+        if ($result['success']) {
+            header('Location: /order.php?success=' . $result['order_id']);
+            exit;
+        }
+
+        $error = $result['error'];
+    }
+}
+
+// Заказ, который только что оформили: показываем его только владельцу.
+$successOrder = null;
+
+if (isset($_GET['success'])) {
+    $stmt = getMysqlConnection()->prepare(
+        'SELECT orders.id, orders.total_price, venues.name AS venue_name,
+                venues.address, pickup_slots.slot_date,
+                pickup_slots.start_time, pickup_slots.end_time
+         FROM orders
+         JOIN venues ON venues.id = orders.venue_id
+         JOIN pickup_slots ON pickup_slots.id = orders.slot_id
+         WHERE orders.id = ? AND orders.user_id = ?'
+    );
+    $stmt->execute([(int) $_GET['success'], (int) $_SESSION['user_id']]);
+    $successOrder = $stmt->fetch();
+
+    if ($successOrder !== false) {
+        $stmt = getMysqlConnection()->prepare(
+            'SELECT dishes.name, order_items.quantity, order_items.price
+             FROM order_items
+             JOIN dishes ON dishes.id = order_items.dish_id
+             WHERE order_items.order_id = ?
+             ORDER BY order_items.id'
+        );
+        $stmt->execute([(int) $successOrder['id']]);
+        $successOrder['items'] = $stmt->fetchAll();
+    }
+}
+
+$cart = getCart();
+$cartItems = getOrderItemsDetails($cart);
+$venues = getActiveVenues();
+$slots = getAvailableSlots();
+
+// Если форма вернулась с ошибкой, оставляем выбор пользователя,
+// чтобы ему не приходилось выбирать заведение и время заново.
+$selectedVenueId = (int) ($_POST['venue_id'] ?? 0);
+$selectedSlotId = (int) ($_POST['slot_id'] ?? 0);
+?>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <title>Оформление заказа — UniFood</title>
+</head>
+<body>
+<h1>Оформление заказа</h1>
+
+<?php if ($successOrder !== null && $successOrder !== false): ?>
+    <p>Заказ №<?= (int) $successOrder['id'] ?> принят. Статус заказа обновит сотрудник.</p>
+
+    <p>
+        Место получения: <?= htmlspecialchars($successOrder['venue_name']) ?>,
+        <?= htmlspecialchars($successOrder['address']) ?><br>
+        Время: <?= htmlspecialchars(date('d.m.Y', strtotime($successOrder['slot_date']))) ?>,
+        <?= htmlspecialchars(substr($successOrder['start_time'], 0, 5)) ?>–<?= htmlspecialchars(substr($successOrder['end_time'], 0, 5)) ?>
+    </p>
+
+    <table>
+        <tr>
+            <th>Блюдо</th>
+            <th>Количество</th>
+            <th>Цена</th>
+            <th>Сумма</th>
+        </tr>
+        <?php foreach ($successOrder['items'] as $item): ?>
+            <tr>
+                <td><?= htmlspecialchars($item['name']) ?></td>
+                <td><?= (int) $item['quantity'] ?></td>
+                <td><?= number_format((float) $item['price'], 2, '.', '') ?></td>
+                <td><?= number_format((float) $item['price'] * (int) $item['quantity'], 2, '.', '') ?></td>
+            </tr>
+        <?php endforeach; ?>
+    </table>
+
+    <p><strong>Итого: <?= number_format((float) $successOrder['total_price'], 2, '.', '') ?></strong></p>
+
+    <p><a href="/cart.php">Корзина</a> | <a href="/">На главную</a></p>
+<?php elseif ($successOrder === false): ?>
+    <p>Заказ не найден.</p>
+    <p><a href="/cart.php">Вернуться в корзину</a></p>
+<?php else: ?>
+    <?php if ($error !== ''): ?>
+        <p><?= htmlspecialchars($error) ?></p>
+    <?php endif; ?>
+
+    <?php if (empty($cart)): ?>
+        <p>Корзина пуста, оформлять нечего.</p>
+        <p><a href="/cart.php">Перейти в корзину</a></p>
+    <?php else: ?>
+        <table>
+            <tr>
+                <th>Блюдо</th>
+                <th>Цена</th>
+                <th>Количество</th>
+                <th>Сумма</th>
+            </tr>
+            <?php
+            $total = 0.0;
+
+            foreach ($cart as $dishId => $quantity):
+                $dish = $cartItems[(int) $dishId] ?? null;
+                ?>
+                <tr>
+                    <?php if ($dish === null): ?>
+                        <td>Блюдо №<?= (int) $dishId ?> (уже нет в меню)</td>
+                        <td>—</td>
+                        <td><?= (int) $quantity ?></td>
+                        <td>—</td>
+                    <?php else: ?>
+                        <td><?= htmlspecialchars($dish['name']) ?></td>
+                        <td><?= number_format((float) $dish['price'], 2, '.', '') ?></td>
+                        <td><?= (int) $quantity ?></td>
+                        <?php
+                        $sum = (float) $dish['price'] * (int) $quantity;
+                        $total += $sum;
+                        ?>
+                        <td><?= number_format($sum, 2, '.', '') ?></td>
+                    <?php endif; ?>
+                </tr>
+            <?php endforeach; ?>
+        </table>
+
+        <p><strong>Итого: <?= number_format($total, 2, '.', '') ?></strong></p>
+
+        <form method="post" action="/order.php">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
+
+            <p>
+                <label for="venue_id">Место получения</label><br>
+                <select id="venue_id" name="venue_id" required>
+                    <option value="">— выберите заведение —</option>
+                    <?php foreach ($venues as $venue): ?>
+                        <option value="<?= (int) $venue['id'] ?>"<?= (int) $venue['id'] === $selectedVenueId ? ' selected' : '' ?>>
+                            <?= htmlspecialchars($venue['name']) ?>, <?= htmlspecialchars($venue['address']) ?>
+                        </option>
+                    <?php endforeach; ?>
+                </select>
+            </p>
+
+            <p>
+                <label for="slot_id">Время получения</label><br>
+                <select id="slot_id" name="slot_id" required>
+                    <option value="">— выберите время —</option>
+                    <?php
+                    // Слоты группируем по заведению, чтобы было видно, к какому
+                    // месту получения относится время. Совпадение заведения
+                    // и слота всё равно проверит createOrder().
+                    $slotsByVenue = [];
+
+                    foreach ($slots as $slot) {
+                        $slotsByVenue[$slot['venue_name']][] = $slot;
+                    }
+                    ?>
+                    <?php foreach ($slotsByVenue as $venueName => $venueSlots): ?>
+                        <optgroup label="<?= htmlspecialchars($venueName) ?>">
+                            <?php foreach ($venueSlots as $slot): ?>
+                                <?php
+                                $slotLabel = date('d.m.Y', strtotime($slot['slot_date']))
+                                    . ', ' . substr($slot['start_time'], 0, 5)
+                                    . '–' . substr($slot['end_time'], 0, 5);
+                                $isFull = (int) $slot['free'] <= 0;
+                                ?>
+                                <option value="<?= (int) $slot['id'] ?>"
+                                        <?= $isFull ? 'disabled' : '' ?>
+                                        <?= (int) $slot['id'] === $selectedSlotId ? ' selected' : '' ?>>
+                                    <?= htmlspecialchars($slotLabel) ?>
+                                    <?= $isFull ? '(мест нет)' : '(свободно ' . (int) $slot['free'] . ')' ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </optgroup>
+                    <?php endforeach; ?>
+                </select>
+            </p>
+
+            <button type="submit">Оформить заказ</button>
+        </form>
+
+        <p><a href="/cart.php">Вернуться в корзину</a></p>
+    <?php endif; ?>
+<?php endif; ?>
+</body>
+</html>
