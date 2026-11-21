@@ -4,7 +4,7 @@
  *
  * Показывает блюда по категориям. Кнопка «В корзину» отправляет POST
  * на /cart.php с полями из контракта: csrf_token, action=add и dish_id.
- * Пока используются временные данные из catalog-data.php.
+ * Список берётся из базы через catalog-data.php.
  */
 
 require_once __DIR__ . '/../src/auth.php';
@@ -36,6 +36,10 @@ $pageTitle = $venue === null ? 'Меню — UniFood' : 'Меню — ' . $venue
 <main class="container">
     <h1 class="page-title"><?= htmlspecialchars($pageTitle) ?></h1>
 
+    <?php if ($catalogError !== ''): ?>
+        <p class="error"><?= htmlspecialchars($catalogError) ?></p>
+    <?php endif; ?>
+
     <?php if ($venue !== null): ?>
         <p class="text-muted"><?= htmlspecialchars($venue['address']) ?></p>
     <?php endif; ?>
@@ -43,12 +47,20 @@ $pageTitle = $venue === null ? 'Меню — UniFood' : 'Меню — ' . $venue
     <p class="text-muted">Цены указаны за одну порцию.</p>
 
     <?php foreach ($categories as $category): ?>
+        <?php if ($venue !== null && $category['venue_id'] !== $venueId): ?>
+            <?php continue; ?>
+        <?php endif; ?>
+
         <section class="category-block">
             <h2 class="section-title"><?= htmlspecialchars($category['name']) ?></h2>
 
             <div class="dish-grid">
                 <?php foreach ($dishes as $dish): ?>
                     <?php if ($dish['category_id'] !== $category['id']): ?>
+                        <?php continue; ?>
+                    <?php endif; ?>
+
+                    <?php if ($venue !== null && $dish['venue_id'] !== $venueId): ?>
                         <?php continue; ?>
                     <?php endif; ?>
 

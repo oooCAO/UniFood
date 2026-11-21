@@ -2,13 +2,19 @@
 /**
  * Страница с информацией о блюде.
  *
- * Ищет блюдо по id во временных данных и показывает его описание.
+ * Ищет блюдо по id в данных из базы и показывает его описание.
  * Кнопка «В корзину» отправляет POST на /cart.php по тому же контракту,
  * что и страница меню.
  */
 
 require_once __DIR__ . '/../src/auth.php';
 require_once __DIR__ . '/catalog-data.php';
+
+if ($catalogError !== '') {
+    $errorMessage = $catalogError;
+    include __DIR__ . '/error.php';
+    exit;
+}
 
 $dishId = (int) ($_GET['id'] ?? 0);
 $dish = null;

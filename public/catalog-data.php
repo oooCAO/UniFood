@@ -1,88 +1,64 @@
 <?php
 /**
- * Временные данные каталога.
+ * Данные каталога из базы.
  *
- * Пока Разработчик 2 не создал таблицы venues, categories и dishes,
- * страницы каталога берут список заведений и блюд отсюда. Данные не секретные,
- * поэтому файл лежит в public/ и может быть открыт из браузера.
+ * Страницы каталога получают здесь списки заведений, категорий и доступных
+ * блюд. Запросы простые и без параметров, поэтому подготовленные выражения
+ * используются только для однообразия с остальным кодом проекта.
+ * Если база недоступна, страницы покажут понятное сообщение, а не ошибку PHP.
  */
 
-$venues = [
-    [
-        'id' => 1,
-        'name' => 'Столовая «ГрГУ»',
-        'address' => 'ул. Октябрьская, 21',
-        'description' => 'Основная столовая университета: первые и вторые блюда каждый день.',
-    ],
-    [
-        'id' => 2,
-        'name' => 'Кафе «Перекус»',
-        'address' => 'ул. Кирова, 8',
-        'description' => 'Быстрые обеды, выпечка и напитки.',
-    ],
-    [
-        'id' => 3,
-        'name' => 'Столовая «Студенческая»',
-        'address' => 'пр-т Мира, 15',
-        'description' => 'Бюджетные блюда и большие порции.',
-    ],
-];
+require_once __DIR__ . '/../src/db_mysql.php';
 
-$categories = [
-    ['id' => 1, 'name' => 'Первые блюда'],
-    ['id' => 2, 'name' => 'Вторые блюда'],
-    ['id' => 3, 'name' => 'Напитки'],
-    ['id' => 4, 'name' => 'Выпечка'],
-];
+$venues = [];
+$categories = [];
+$dishes = [];
+$catalogError = '';
 
-$dishes = [
-    [
-        'id' => 101,
-        'name' => 'Борщ',
-        'category_id' => 1,
-        'description' => 'Свекольный суп со сметаной и зеленью.',
-        'price' => 2.50,
-    ],
-    [
-        'id' => 102,
-        'name' => 'Суп куриный',
-        'category_id' => 1,
-        'description' => 'Лёгкий суп с лапшой и курицей.',
-        'price' => 2.20,
-    ],
-    [
-        'id' => 201,
-        'name' => 'Котлеты по-киевски',
-        'category_id' => 2,
-        'description' => 'Куриные котлеты с гречкой и салатом.',
-        'price' => 3.80,
-    ],
-    [
-        'id' => 202,
-        'name' => 'Паста с томатами',
-        'category_id' => 2,
-        'description' => 'Спагетти с томатным соусом и сыром.',
-        'price' => 3.20,
-    ],
-    [
-        'id' => 301,
-        'name' => 'Чай чёрный',
-        'category_id' => 3,
-        'description' => 'Кружка чая объёмом 300 мл.',
-        'price' => 0.60,
-    ],
-    [
-        'id' => 302,
-        'name' => 'Компот',
-        'category_id' => 3,
-        'description' => 'Домашний компот из сухофруктов, 300 мл.',
-        'price' => 0.70,
-    ],
-    [
-        'id' => 401,
-        'name' => 'Пирожок с яблоком',
-        'category_id' => 4,
-        'description' => 'Свежая выпечка с яблочной начинкой.',
-        'price' => 0.90,
-    ],
-];
+try {
+    $connection = getMysqlConnection();
+
+    // Неактивные заведения студенту не показываем.
+    $stmt = $connection->prepare('SELECT id, name, address FROM venues WHERE is_active = 1 ORDER BY id');
+    $stmt->execute();
+    foreach ($stmt->fetchAll() as $row) {
+        $venues[] = [
+            'id' => (int) $row['id'],
+            'name' => (string) $row['name'],
+            'address' => (string) $row['address'],
+        ];
+    }
+
+    $stmt = $connection->prepare('SELECT id, venue_id, name FROM categories ORDER BY venue_id, sort_order, id');
+    $stmt->execute();
+    foreach ($stmt->fetchAll() as $row) {
+        $categories[] = [
+            'id' => (int) $row['id'],
+            'venue_id' => (int) $row['venue_id'],
+            'name' => (string) $row['name'],
+        ];
+    }
+
+    // Недоступные блюда в каталоге не показываем: их нельзя заказать.
+    $stmt = $connection->prepare(
+        'SELECT id, venue_id, category_id, name, description, price FROM dishes WHERE is_available = 1 ORDER BY category_id, id'
+    );
+    $stmt->execute();
+    foreach ($stmt->fetchAll() as $row) {
+        $dishes[] = [
+            'id' => (int) $row['id'],
+            'venue_id' => (int) $row['venue_id'],
+            'category_id' => (int) $row['category_id'],
+            'name' => (string) $row['name'],
+            'description' => (string) ($row['description'] ?? ''),
+            'price' => (float) $row['price'],
+        ];
+    }
+} catch (Throwable $error) {
+    // Техническую причину наружу не отдаём: пользователю важно только то,
+    // что каталог временно недоступен.
+    $catalogError = 'Каталог временно недоступен. Попробуйте обновить страницу позже.';
+    $venues = [];
+    $categories = [];
+    $dishes = [];
+}

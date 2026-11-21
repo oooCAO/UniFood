@@ -3,7 +3,7 @@
  * Главная страница.
  *
  * Показывает список заведений, где студент может сделать предзаказ.
- * Пока используются временные данные из catalog-data.php.
+ * Список берётся из базы через catalog-data.php.
  */
 
 require_once __DIR__ . '/catalog-data.php';
@@ -25,12 +25,15 @@ $pageTitle = 'UniFood — заведения';
     <h1 class="page-title">Заведения</h1>
     <p class="text-muted">Выберите столовую или кафе, чтобы посмотреть меню.</p>
 
+    <?php if ($catalogError !== ''): ?>
+        <p class="error"><?= htmlspecialchars($catalogError) ?></p>
+    <?php endif; ?>
+
     <div class="venue-grid">
         <?php foreach ($venues as $venue): ?>
             <section class="card">
                 <h3><?= htmlspecialchars($venue['name']) ?></h3>
                 <p><strong>Адрес:</strong> <?= htmlspecialchars($venue['address']) ?></p>
-                <p><?= htmlspecialchars($venue['description']) ?></p>
                 <a class="btn" href="/menu.php?venue=<?= (int) $venue['id'] ?>">Смотреть меню</a>
             </section>
         <?php endforeach; ?>
