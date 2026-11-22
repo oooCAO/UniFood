@@ -64,10 +64,15 @@ $cartItems = getOrderItemsDetails($cart);
 <html lang="ru">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Корзина — UniFood</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<h1>Корзина</h1>
+<?php include __DIR__ . '/header.php'; ?>
+
+<main class="container">
+<h1 class="page-title">Корзина</h1>
 
 <?php if ($error !== ''): ?>
     <p><?= htmlspecialchars($error) ?></p>
@@ -122,9 +127,15 @@ $cartItems = getOrderItemsDetails($cart);
         <?php endforeach; ?>
     </table>
 
-    <p><a href="/order.php">Оформить заказ</a></p>
+    <p><a class="btn btn-primary" href="/order.php">Оформить заказ</a></p>
 <?php endif; ?>
 
-<p><a href="/">На главную</a></p>
+<p>
+    <a class="btn" href="/orders.php">Мои заказы</a>
+    <a class="btn" href="/">На главную</a>
+</p>
+</main>
+
+<?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>

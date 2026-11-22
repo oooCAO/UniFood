@@ -106,10 +106,15 @@ $canSubmitOrder = !empty($cart) && !$cartHasUnavailable && !$cartHasMixedVenues;
 <html lang="ru">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Оформление заказа — UniFood</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<h1>Оформление заказа</h1>
+<?php include __DIR__ . '/header.php'; ?>
+
+<main class="container">
+<h1 class="page-title">Оформление заказа</h1>
 
 <?php if ($successOrder !== null && $successOrder !== false): ?>
     <p>Заказ №<?= (int) $successOrder['id'] ?> принят. Статус заказа обновит сотрудник.</p>
@@ -140,10 +145,17 @@ $canSubmitOrder = !empty($cart) && !$cartHasUnavailable && !$cartHasMixedVenues;
 
     <p><strong>Итого: <?= number_format((float) $successOrder['total_price'], 2, '.', '') ?></strong></p>
 
-    <p><a href="/cart.php">Корзина</a> | <a href="/">На главную</a></p>
+    <p>
+        <a class="btn btn-primary" href="/orders.php?id=<?= (int) $successOrder['id'] ?>">Посмотреть заказ</a>
+        <a class="btn" href="/orders.php">Мои заказы</a>
+        <a class="btn" href="/">На главную</a>
+    </p>
 <?php elseif ($successOrder === false): ?>
     <p>Заказ не найден.</p>
-    <p><a href="/cart.php">Вернуться в корзину</a></p>
+    <p>
+        <a class="btn" href="/orders.php">Мои заказы</a>
+        <a class="btn" href="/cart.php">Вернуться в корзину</a>
+    </p>
 <?php else: ?>
     <?php if ($error !== ''): ?>
         <p><?= htmlspecialchars($error) ?></p>
@@ -256,8 +268,11 @@ $canSubmitOrder = !empty($cart) && !$cartHasUnavailable && !$cartHasMixedVenues;
         </form>
         <?php endif; ?>
 
-        <p><a href="/cart.php">Вернуться в корзину</a></p>
+        <p><a class="btn" href="/cart.php">Вернуться в корзину</a></p>
     <?php endif; ?>
 <?php endif; ?>
+</main>
+
+<?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>
