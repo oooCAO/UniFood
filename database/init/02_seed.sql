@@ -17,6 +17,10 @@ INSERT INTO venues (id, name, address, is_active) VALUES
     (1, 'Столовая Главного корпуса', 'ул. Университетская, 1', 1),
     (2, 'Кафе Политехнического корпуса', 'ул. Советская, 10', 1);
 
+-- Отдельным UPDATE, а не в INSERT INTO users: на момент вставки users
+-- строки venues ещё не существуют, FK бы не дал вставить venue_id сразу.
+UPDATE users SET venue_id = 1 WHERE email = 'staff@unifood.test';
+
 INSERT INTO categories (id, venue_id, name, sort_order) VALUES
     (1, 1, 'Горячее', 1),
     (2, 1, 'Напитки', 2),
