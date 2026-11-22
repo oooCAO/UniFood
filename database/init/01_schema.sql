@@ -9,6 +9,10 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(100) NOT NULL,
     role ENUM('student', 'staff', 'admin') NOT NULL DEFAULT 'student',
+    -- Заведение, в котором работает сотрудник (роль staff). У студента и
+    -- администратора всегда NULL. FK на venues добавлен ниже отдельным
+    -- ALTER TABLE, так как таблица venues создаётся позже в этом файле.
+    venue_id INT UNSIGNED NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
@@ -87,3 +91,7 @@ CREATE TABLE order_items (
     FOREIGN KEY (order_id) REFERENCES orders(id),
     FOREIGN KEY (dish_id) REFERENCES dishes(id)
 ) ENGINE=InnoDB;
+
+-- users.venue_id ссылается на venues, которая создана выше, но после users —
+-- добавляем ограничение здесь, а не меняем порядок создания таблиц.
+ALTER TABLE users ADD CONSTRAINT fk_users_venue FOREIGN KEY (venue_id) REFERENCES venues(id);
