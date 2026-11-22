@@ -7,6 +7,10 @@
  */
 
 require_once __DIR__ . '/catalog-data.php';
+require_once __DIR__ . '/../src/auth.php';
+
+// Сессия нужна для CSRF-токена и счётчика корзины, поэтому стартуем её до вывода HTML.
+startSession();
 
 $pageTitle = 'UniFood — заведения';
 ?>

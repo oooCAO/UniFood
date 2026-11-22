@@ -10,6 +10,9 @@
 require_once __DIR__ . '/../src/auth.php';
 require_once __DIR__ . '/catalog-data.php';
 
+// Иначе шапка вызовет startSession() после вывода HTML и cookie сессии не уйдёт.
+startSession();
+
 $venueId = (int) ($_GET['venue'] ?? 0);
 $venue = null;
 
