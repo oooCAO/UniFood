@@ -71,25 +71,20 @@ $roleLabels = [
     ROLE_STAFF => 'Сотрудник',
     ROLE_ADMIN => 'Администратор',
 ];
+$pageTitle = 'Пользователи — админка UniFood';
+include __DIR__ . '/admin-header.php';
 ?>
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <title>Пользователи — админка UniFood</title>
-</head>
-<body>
-<h1>Пользователи</h1>
+<h1 class="admin-page-title">Пользователи</h1>
 
 <?php if ($error !== ''): ?>
-    <p><?= htmlspecialchars($error) ?></p>
+    <p class="error"><?= htmlspecialchars($error) ?></p>
 <?php endif; ?>
 
-<ul>
+<ul class="admin-list">
     <?php foreach ($users as $user): ?>
         <li>
             <?= htmlspecialchars($user['email']) ?> — <?= htmlspecialchars($user['full_name']) ?>
-            <form method="post" action="/admin/users.php">
+            <form method="post" action="/admin/users.php" class="admin-form">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
                 <input type="hidden" name="action" value="update">
                 <input type="hidden" name="id" value="<?= (int) $user['id'] ?>">
@@ -112,8 +107,8 @@ $roleLabels = [
     <?php endforeach; ?>
 </ul>
 
-<h2>Создать пользователя</h2>
-<form method="post" action="/admin/users.php">
+<h2 class="admin-section-title">Создать пользователя</h2>
+<form method="post" action="/admin/users.php" class="admin-form">
     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
     <input type="hidden" name="action" value="add">
     <p>
@@ -147,6 +142,4 @@ $roleLabels = [
     <button type="submit">Создать</button>
 </form>
 
-<p><a href="/admin/venues.php">Заведения</a> · <a href="/admin/categories.php">Категории</a> · <a href="/admin/dishes.php">Блюда</a> · <a href="/">На главную</a></p>
-</body>
-</html>
+<?php include __DIR__ . '/admin-footer.php'; ?>

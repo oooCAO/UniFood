@@ -53,24 +53,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $venues = listVenues();
+$pageTitle = 'Заведения — админка UniFood';
+include __DIR__ . '/admin-header.php';
 ?>
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <title>Заведения — админка UniFood</title>
-</head>
-<body>
-<h1>Заведения</h1>
+<h1 class="admin-page-title">Заведения</h1>
 
 <?php if ($error !== ''): ?>
-    <p><?= htmlspecialchars($error) ?></p>
+    <p class="error"><?= htmlspecialchars($error) ?></p>
 <?php endif; ?>
 
-<ul>
+<ul class="admin-list">
     <?php foreach ($venues as $venue): ?>
         <li>
-            <form method="post" action="/admin/venues.php">
+            <form method="post" action="/admin/venues.php" class="admin-form">
                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
                 <input type="hidden" name="action" value="update">
                 <input type="hidden" name="id" value="<?= (int) $venue['id'] ?>">
@@ -86,8 +81,8 @@ $venues = listVenues();
     <?php endforeach; ?>
 </ul>
 
-<h2>Добавить заведение</h2>
-<form method="post" action="/admin/venues.php">
+<h2 class="admin-section-title">Добавить заведение</h2>
+<form method="post" action="/admin/venues.php" class="admin-form">
     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
     <input type="hidden" name="action" value="add">
     <p>
@@ -99,6 +94,4 @@ $venues = listVenues();
     <button type="submit">Добавить</button>
 </form>
 
-<p><a href="/admin/categories.php">Категории</a> · <a href="/">На главную</a></p>
-</body>
-</html>
+<?php include __DIR__ . '/admin-footer.php'; ?>

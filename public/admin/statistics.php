@@ -37,17 +37,12 @@ try {
     error_log('Ошибка при расчёте статистики: ' . $e->getMessage());
     $error = 'Не удалось посчитать статистику. Попробуйте обновить страницу.';
 }
+$pageTitle = 'Статистика — админка UniFood';
+include __DIR__ . '/admin-header.php';
 ?>
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <title>Статистика — админка UniFood</title>
-</head>
-<body>
-<h1>Статистика</h1>
+<h1 class="admin-page-title">Статистика</h1>
 
-<form method="get" action="/admin/statistics.php">
+<form method="get" action="/admin/statistics.php" class="admin-filter-form">
     <label>
         Заведение:
         <select name="venue_id">
@@ -69,11 +64,11 @@ try {
 </form>
 
 <?php if ($error !== ''): ?>
-    <p><?= htmlspecialchars($error) ?></p>
+    <p class="error"><?= htmlspecialchars($error) ?></p>
 <?php else: ?>
-    <p>Учитываются только выданные заказы (статус «Получен»).</p>
+    <p class="notice">Учитываются только выданные заказы (статус «Получен»).</p>
 
-    <ul>
+    <ul class="admin-list admin-stats-summary">
         <li>Заказов: <?= (int) $orderStats['orders_count'] ?></li>
         <li>Выручка: <?= number_format($orderStats['revenue'], 2, '.', '') ?></li>
         <li>
@@ -82,11 +77,11 @@ try {
         </li>
     </ul>
 
-    <h2>Популярные блюда</h2>
+    <h2 class="admin-section-title">Популярные блюда</h2>
     <?php if (empty($topDishes)): ?>
-        <p>За выбранный период данных нет.</p>
+        <p class="notice">За выбранный период данных нет.</p>
     <?php else: ?>
-        <ul>
+        <ul class="admin-list">
             <?php foreach ($topDishes as $dish): ?>
                 <li><?= htmlspecialchars($dish['name']) ?> — <?= (int) $dish['total_quantity'] ?> порций</li>
             <?php endforeach; ?>
@@ -94,6 +89,4 @@ try {
     <?php endif; ?>
 <?php endif; ?>
 
-<p><a href="/admin/venues.php">Заведения</a> · <a href="/admin/categories.php">Категории</a> · <a href="/admin/dishes.php">Блюда</a> · <a href="/admin/users.php">Пользователи</a> · <a href="/admin/slots.php">Слоты</a> · <a href="/">На главную</a></p>
-</body>
-</html>
+<?php include __DIR__ . '/admin-footer.php'; ?>
