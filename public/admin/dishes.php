@@ -69,24 +69,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $categories = $venueId > 0 ? listCategories($venueId) : [];
 $dishes = $venueId > 0 ? listDishes($venueId) : [];
+$pageTitle = 'Блюда — админка UniFood';
+include __DIR__ . '/admin-header.php';
 ?>
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <title>Блюда — админка UniFood</title>
-</head>
-<body>
-<h1>Блюда</h1>
+<h1 class="admin-page-title">Блюда</h1>
 
 <?php if ($error !== ''): ?>
-    <p><?= htmlspecialchars($error) ?></p>
+    <p class="error"><?= htmlspecialchars($error) ?></p>
 <?php endif; ?>
 
 <?php if (empty($venues)): ?>
-    <p>Сначала нужно добавить заведение.</p>
+    <p class="notice">Сначала нужно добавить заведение.</p>
 <?php else: ?>
-    <form method="get" action="/admin/dishes.php">
+    <form method="get" action="/admin/dishes.php" class="admin-filter-form">
         <label>
             Заведение:
             <select name="venue_id" onchange="this.form.submit()">
@@ -100,12 +95,12 @@ $dishes = $venueId > 0 ? listDishes($venueId) : [];
     </form>
 
     <?php if (empty($categories)): ?>
-        <p>В этом заведении пока нет категорий. <a href="/admin/categories.php?venue_id=<?= (int) $venueId ?>">Добавить категорию</a>, прежде чем добавлять блюда.</p>
+        <p class="notice">В этом заведении пока нет категорий. <a href="/admin/categories.php?venue_id=<?= (int) $venueId ?>">Добавить категорию</a>, прежде чем добавлять блюда.</p>
     <?php else: ?>
-        <ul>
+        <ul class="admin-list">
             <?php foreach ($dishes as $dish): ?>
                 <li>
-                    <form method="post" action="/admin/dishes.php">
+                    <form method="post" action="/admin/dishes.php" class="admin-form">
                         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
                         <input type="hidden" name="action" value="update">
                         <input type="hidden" name="id" value="<?= (int) $dish['id'] ?>">
@@ -130,8 +125,8 @@ $dishes = $venueId > 0 ? listDishes($venueId) : [];
             <?php endforeach; ?>
         </ul>
 
-        <h2>Добавить блюдо</h2>
-        <form method="post" action="/admin/dishes.php">
+        <h2 class="admin-section-title">Добавить блюдо</h2>
+        <form method="post" action="/admin/dishes.php" class="admin-form">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
             <input type="hidden" name="action" value="add">
             <input type="hidden" name="venue_id" value="<?= (int) $venueId ?>">
@@ -158,6 +153,4 @@ $dishes = $venueId > 0 ? listDishes($venueId) : [];
     <?php endif; ?>
 <?php endif; ?>
 
-<p><a href="/admin/venues.php">Заведения</a> · <a href="/admin/categories.php">Категории</a> · <a href="/">На главную</a></p>
-</body>
-</html>
+<?php include __DIR__ . '/admin-footer.php'; ?>
