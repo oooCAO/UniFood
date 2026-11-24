@@ -8,6 +8,9 @@
 :root {
     --color-bg: #f7f7f5;
     --color-card: #ffffff;
+    /* Карточки заведений на главной: чуть темнее фона страницы, чтобы
+       блоки читались, но не отвлекали от содержимого. */
+    --color-card-soft: #eeeee8;
     --color-text: #222222;
     --color-muted: #666666;
     --color-border: #dcdcd6;
@@ -127,6 +130,24 @@ main {
 
 .card p {
     margin: 0 0 12px;
+}
+
+/* На главной карточки заведений одного вида: фон темнее страницы,
+   кнопка прижата к низу, поэтому карточки в ряду выглядят ровно. */
+.venue-grid .card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: var(--color-card-soft);
+}
+
+.venue-grid .card .btn {
+    margin-top: auto;
+    align-self: flex-start;
+}
+
+.venue-grid .card p:last-of-type {
+    margin-bottom: 16px;
 }
 
 .category-block {
@@ -303,9 +324,10 @@ input[type="number"] {
     gap: 12px;
 }
 
+/* Название столовой оформлено как заголовок карточки в каталоге. */
 .today-menu-canteen {
     margin: 0;
-    font-size: 18px;
+    font-size: 19px;
 }
 
 .today-menu-images {
