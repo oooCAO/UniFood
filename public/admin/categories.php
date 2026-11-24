@@ -72,24 +72,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $categories = $venueId > 0 ? listCategories($venueId) : [];
+$pageTitle = 'Категории — админка UniFood';
+include __DIR__ . '/admin-header.php';
 ?>
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <title>Категории — админка UniFood</title>
-</head>
-<body>
-<h1>Категории</h1>
+<h1 class="admin-page-title">Категории</h1>
 
 <?php if ($error !== ''): ?>
-    <p><?= htmlspecialchars($error) ?></p>
+    <p class="error"><?= htmlspecialchars($error) ?></p>
 <?php endif; ?>
 
 <?php if (empty($venues)): ?>
-    <p>Сначала нужно добавить заведение.</p>
+    <p class="notice">Сначала нужно добавить заведение.</p>
 <?php else: ?>
-    <form method="get" action="/admin/categories.php">
+    <form method="get" action="/admin/categories.php" class="admin-filter-form">
         <label>
             Заведение:
             <select name="venue_id" onchange="this.form.submit()">
@@ -102,10 +97,10 @@ $categories = $venueId > 0 ? listCategories($venueId) : [];
         </label>
     </form>
 
-    <ul>
+    <ul class="admin-list">
         <?php foreach ($categories as $category): ?>
             <li>
-                <form method="post" action="/admin/categories.php">
+                <form method="post" action="/admin/categories.php" class="admin-form">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
                     <input type="hidden" name="action" value="update">
                     <input type="hidden" name="id" value="<?= (int) $category['id'] ?>">
@@ -114,7 +109,7 @@ $categories = $venueId > 0 ? listCategories($venueId) : [];
                     <input type="number" name="sort_order" value="<?= (int) $category['sort_order'] ?>">
                     <button type="submit">Сохранить</button>
                 </form>
-                <form method="post" action="/admin/categories.php">
+                <form method="post" action="/admin/categories.php" class="admin-form">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
                     <input type="hidden" name="action" value="delete">
                     <input type="hidden" name="id" value="<?= (int) $category['id'] ?>">
@@ -125,8 +120,8 @@ $categories = $venueId > 0 ? listCategories($venueId) : [];
         <?php endforeach; ?>
     </ul>
 
-    <h2>Добавить категорию</h2>
-    <form method="post" action="/admin/categories.php">
+    <h2 class="admin-section-title">Добавить категорию</h2>
+    <form method="post" action="/admin/categories.php" class="admin-form">
         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
         <input type="hidden" name="action" value="add">
         <input type="hidden" name="venue_id" value="<?= (int) $venueId ?>">
@@ -140,6 +135,4 @@ $categories = $venueId > 0 ? listCategories($venueId) : [];
     </form>
 <?php endif; ?>
 
-<p><a href="/admin/venues.php">Заведения</a> · <a href="/">На главную</a></p>
-</body>
-</html>
+<?php include __DIR__ . '/admin-footer.php'; ?>

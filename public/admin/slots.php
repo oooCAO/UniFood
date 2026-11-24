@@ -60,24 +60,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $slots = $venueId > 0 ? listSlots($venueId) : [];
+$pageTitle = 'Слоты получения — админка UniFood';
+include __DIR__ . '/admin-header.php';
 ?>
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="utf-8">
-    <title>Слоты получения — админка UniFood</title>
-</head>
-<body>
-<h1>Временные слоты</h1>
+<h1 class="admin-page-title">Временные слоты</h1>
 
 <?php if ($error !== ''): ?>
-    <p><?= htmlspecialchars($error) ?></p>
+    <p class="error"><?= htmlspecialchars($error) ?></p>
 <?php endif; ?>
 
 <?php if (empty($venues)): ?>
-    <p>Сначала нужно добавить заведение.</p>
+    <p class="notice">Сначала нужно добавить заведение.</p>
 <?php else: ?>
-    <form method="get" action="/admin/slots.php">
+    <form method="get" action="/admin/slots.php" class="admin-filter-form">
         <label>
             Заведение:
             <select name="venue_id" onchange="this.form.submit()">
@@ -90,10 +85,10 @@ $slots = $venueId > 0 ? listSlots($venueId) : [];
         </label>
     </form>
 
-    <ul>
+    <ul class="admin-list">
         <?php foreach ($slots as $slot): ?>
             <li>
-                <form method="post" action="/admin/slots.php">
+                <form method="post" action="/admin/slots.php" class="admin-form">
                     <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
                     <input type="hidden" name="action" value="update">
                     <input type="hidden" name="id" value="<?= (int) $slot['id'] ?>">
@@ -112,8 +107,8 @@ $slots = $venueId > 0 ? listSlots($venueId) : [];
         <?php endforeach; ?>
     </ul>
 
-    <h2>Добавить слот</h2>
-    <form method="post" action="/admin/slots.php">
+    <h2 class="admin-section-title">Добавить слот</h2>
+    <form method="post" action="/admin/slots.php" class="admin-form">
         <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
         <input type="hidden" name="action" value="add">
         <input type="hidden" name="venue_id" value="<?= (int) $venueId ?>">
@@ -133,6 +128,4 @@ $slots = $venueId > 0 ? listSlots($venueId) : [];
     </form>
 <?php endif; ?>
 
-<p><a href="/admin/venues.php">Заведения</a> · <a href="/admin/categories.php">Категории</a> · <a href="/admin/dishes.php">Блюда</a> · <a href="/admin/users.php">Пользователи</a> · <a href="/">На главную</a></p>
-</body>
-</html>
+<?php include __DIR__ . '/admin-footer.php'; ?>
