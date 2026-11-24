@@ -17,6 +17,9 @@ services:
       - ./public:/var/www/html/public
       - ./src:/var/www/html/src
       - ./composer.json:/var/www/html/composer.json
+      # Lock-файл монтируем отдельно: без него composer install внутри
+      # контейнера резолвит зависимости заново и игнорирует зафиксированные версии.
+      - ./composer.lock:/var/www/html/composer.lock
     # PHP читает настройки подключения из переменных окружения (src/config.php).
     # Значения собираем из .env, чтобы не дублировать пароли в нескольких местах.
     environment:
