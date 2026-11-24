@@ -16,6 +16,10 @@ services:
     volumes:
       - ./public:/var/www/html/public
       - ./src:/var/www/html/src
+      # bin/ и tests/ нужны и веб-контейнеру: скрипт импорта и его проверки
+      # запускают вручную через docker compose exec web.
+      - ./bin:/var/www/html/bin
+      - ./tests:/var/www/html/tests
       - ./composer.json:/var/www/html/composer.json
       # Lock-файл монтируем отдельно: без него composer install внутри
       # контейнера резолвит зависимости заново и игнорирует зафиксированные версии.
@@ -37,6 +41,40 @@ services:
     depends_on:
       - mysql
       - mongo
+
+  # Ежедневный импорт меню market.grsu.by по расписанию.
+  # Здесь нет веб-сервера: контейнер только держит cron и запускает PHP-скрипт.
+  cron:
+    build:
+      # Тот же контекст, что у web, но отдельный Dockerfile.
+      context: .
+      dockerfile: docker/cron/Dockerfile
+    # Скрипт импорта использует те же файлы проекта, что и сайт.
+    volumes:
+      - ./public:/var/www/html/public
+      - ./src:/var/www/html/src
+      - ./bin:/var/www/html/bin
+      - ./tests:/var/www/html/tests
+      - ./composer.json:/var/www/html/composer.json
+      - ./composer.lock:/var/www/html/composer.lock
+    # Подключения к базам те же, что у web: импорт пишет в MySQL,
+    # а позже может понадобиться MongoDB.
+    environment:
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_NAME: "${MYSQL_DATABASE}"
+      DB_USER: "${MYSQL_USER}"
+      DB_PASSWORD: "${MYSQL_PASSWORD}"
+      MONGO_HOST: mongo
+      MONGO_DB_PORT: "27017"
+      MONGO_DB_NAME: "${MONGO_INITDB_DATABASE}"
+      MONGO_USER: "${MONGO_INITDB_ROOT_USERNAME}"
+      MONGO_PASSWORD: "${MONGO_INITDB_ROOT_PASSWORD}"
+    # Импорт должен дождаться баз, иначе первый запуск упадёт.
+    depends_on:
+      - mysql
+      - mongo
+    restart: unless-stopped
 
   # MySQL 8: реляционные данные (пользователи, заказы, меню).
   mysql:
