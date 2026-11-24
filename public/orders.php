@@ -23,6 +23,8 @@ $showDetails = isset($_GET['id']);
 $error = '';
 $order = null;
 $orders = [];
+$history = [];
+$historyError = '';
 
 try {
     if ($showDetails) {
@@ -32,6 +34,16 @@ try {
             // Заказа нет или он чужой — ответ одинаковый, чтобы по коду
             // ответа нельзя было узнать, существует ли чужой заказ.
             http_response_code(404);
+        } else {
+            // История запрашивается только для своего заказа и только после
+            // того, как заказ найден. Сбой Mongo не должен ломать страницу:
+            // статус и состав уже есть в MySQL, показываем их без истории.
+            try {
+                $history = getOrderStatusHistory($orderId);
+            } catch (Throwable $e) {
+                error_log('Не удалось прочитать историю статусов заказа: ' . $e->getMessage());
+                $historyError = 'Не удалось загрузить историю изменений. Попробуйте обновить страницу позже.';
+            }
         }
     } else {
         $orders = getUserOrdersWithItems($userId);
@@ -97,6 +109,33 @@ $pageTitle = $showDetails ? 'Заказ — UniFood' : 'Мои заказы — 
             </table>
 
             <p><strong>Итого: <?= number_format((float) $order['total_price'], 2, '.', '') ?></strong></p>
+        </section>
+
+        <section class="card">
+            <h2 class="section-title">История статусов</h2>
+
+            <?php if ($historyError !== ''): ?>
+                <p class="notice"><?= htmlspecialchars($historyError) ?></p>
+            <?php elseif (empty($history)): ?>
+                <p class="notice">История изменений пока пуста.</p>
+            <?php else: ?>
+                <table>
+                    <tr>
+                        <th>Когда (Минск)</th>
+                        <th>Было</th>
+                        <th>Стало</th>
+                        <th>Кто изменил</th>
+                    </tr>
+                    <?php foreach ($history as $entry): ?>
+                        <tr>
+                            <td><?= htmlspecialchars($entry['changed_at']->format('d.m.Y H:i')) ?></td>
+                            <td><?= htmlspecialchars(getOrderStatusLabel($entry['old_status'])) ?></td>
+                            <td><?= htmlspecialchars(getOrderStatusLabel($entry['new_status'])) ?></td>
+                            <td><?= htmlspecialchars($entry['changed_by_name']) ?></td>
+                        </tr>
+                    <?php endforeach; ?>
+                </table>
+            <?php endif; ?>
         </section>
 
         <p><a class="btn" href="/orders.php">Все мои заказы</a></p>
