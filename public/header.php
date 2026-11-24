@@ -11,6 +11,7 @@ require_once __DIR__ . '/../src/cart.php';
 
 // Счётчик нужен рядом со ссылкой на корзину, он считает порции из сессии.
 $cartCount = getCartItemCount();
+$currentRole = getCurrentUserRole();
 ?>
 <header class="site-header">
     <div class="container header-inner">
@@ -19,9 +20,18 @@ $cartCount = getCartItemCount();
         <nav class="main-nav">
             <a href="/">Заведения</a>
             <a href="/menu.php">Меню</a>
+            <a href="/today-menu.php">Меню на сегодня</a>
             <a href="/cart.php">Корзина <span class="cart-count"><?= (int) $cartCount ?></span></a>
 
             <?php if (isLoggedIn()): ?>
+                <?php if ($currentRole === ROLE_STUDENT): ?>
+                    <a href="/orders.php">Мои заказы</a>
+                <?php elseif ($currentRole === ROLE_STAFF): ?>
+                    <a href="/staff/orders.php">Заказы</a>
+                <?php elseif ($currentRole === ROLE_ADMIN): ?>
+                    <a href="/admin/venues.php">Админка</a>
+                <?php endif; ?>
+
                 <a href="/logout.php">Выйти</a>
             <?php else: ?>
                 <a href="/login.php">Вход</a>

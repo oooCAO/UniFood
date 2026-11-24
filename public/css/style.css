@@ -8,6 +8,9 @@
 :root {
     --color-bg: #f7f7f5;
     --color-card: #ffffff;
+    /* Карточки заведений на главной: чуть темнее фона страницы, чтобы
+       блоки читались, но не отвлекали от содержимого. */
+    --color-card-soft: #eeeee8;
     --color-text: #222222;
     --color-muted: #666666;
     --color-border: #dcdcd6;
@@ -127,6 +130,24 @@ main {
 
 .card p {
     margin: 0 0 12px;
+}
+
+/* На главной карточки заведений одного вида: фон темнее страницы,
+   кнопка прижата к низу, поэтому карточки в ряду выглядят ровно. */
+.venue-grid .card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    background: var(--color-card-soft);
+}
+
+.venue-grid .card .btn {
+    margin-top: auto;
+    align-self: flex-start;
+}
+
+.venue-grid .card p:last-of-type {
+    margin-bottom: 16px;
 }
 
 .category-block {
@@ -283,6 +304,51 @@ input[type="number"] {
     font-weight: bold;
 }
 
+/* Меню на сегодня */
+
+/* Карточки столовых идут сеткой, как каталог, но картинки меню
+   высокие, поэтому минимум колонки больше. */
+.today-menu-source {
+    margin: 0 0 20px;
+}
+
+.today-menu-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.today-menu-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Название столовой оформлено как заголовок карточки в каталоге. */
+.today-menu-canteen {
+    margin: 0;
+    font-size: 19px;
+}
+
+.today-menu-images {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.today-menu-image-link {
+    display: block;
+}
+
+.today-menu-image {
+    display: block;
+    width: 100%;
+    height: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: #ffffff;
+}
+
 /* Таблицы и сообщения */
 
 table {
@@ -365,5 +431,9 @@ th {
 
     .auth-title {
         font-size: 23px;
+    }
+
+    .today-menu-list {
+        grid-template-columns: 1fr;
     }
 }
