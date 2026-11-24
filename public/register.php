@@ -67,41 +67,59 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="ru">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Регистрация — UniFood</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<h1>Регистрация</h1>
+<?php include __DIR__ . '/header.php'; ?>
 
-<?php foreach ($errors as $error): ?>
-    <p><?= htmlspecialchars($error) ?></p>
-<?php endforeach; ?>
+<main class="container">
+    <section class="card auth-card">
+        <h1 class="page-title auth-title">Регистрация</h1>
+        <p class="text-muted auth-subtitle">Создайте аккаунт студента, чтобы предзаказывать еду в столовых и кафе ГрГУ.</p>
 
-<form method="post" action="/register.php">
-    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
+        <?php if ($errors): ?>
+            <div class="error auth-errors">
+                <p>Проверьте введённые данные:</p>
+                <ul>
+                    <?php foreach ($errors as $error): ?>
+                        <li><?= htmlspecialchars($error) ?></li>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+        <?php endif; ?>
 
-    <p>
-        <label for="email">Email</label><br>
-        <input type="email" id="email" name="email" value="<?= htmlspecialchars($email) ?>" required>
-    </p>
+        <form method="post" action="/register.php" class="auth-form">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
 
-    <p>
-        <label for="full_name">Имя</label><br>
-        <input type="text" id="full_name" name="full_name" maxlength="100" value="<?= htmlspecialchars($fullName) ?>" required>
-    </p>
+            <p>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="<?= htmlspecialchars($email) ?>" required>
+            </p>
 
-    <p>
-        <label for="password">Пароль</label><br>
-        <input type="password" id="password" name="password" required>
-    </p>
+            <p>
+                <label for="full_name">Имя</label>
+                <input type="text" id="full_name" name="full_name" maxlength="100" value="<?= htmlspecialchars($fullName) ?>" required>
+            </p>
 
-    <p>
-        <label for="password_confirm">Повторите пароль</label><br>
-        <input type="password" id="password_confirm" name="password_confirm" required>
-    </p>
+            <p>
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" required>
+            </p>
 
-    <button type="submit">Зарегистрироваться</button>
-</form>
+            <p>
+                <label for="password_confirm">Повторите пароль</label>
+                <input type="password" id="password_confirm" name="password_confirm" required>
+            </p>
 
-<p>Уже есть аккаунт? <a href="/login.php">Войти</a></p>
+            <button class="btn btn-primary auth-submit" type="submit">Зарегистрироваться</button>
+        </form>
+
+        <p class="auth-switch">Уже есть аккаунт? <a href="/login.php">Войти</a></p>
+    </section>
+</main>
+
+<?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>

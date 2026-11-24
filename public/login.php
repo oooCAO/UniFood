@@ -43,31 +43,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <html lang="ru">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Вход — UniFood</title>
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-<h1>Вход</h1>
+<?php include __DIR__ . '/header.php'; ?>
 
-<?php if ($error !== ''): ?>
-    <p><?= htmlspecialchars($error) ?></p>
-<?php endif; ?>
+<main class="container">
+    <section class="card auth-card">
+        <h1 class="page-title auth-title">Вход</h1>
+        <p class="text-muted auth-subtitle">Войдите, чтобы оформлять заказы и смотреть их статус.</p>
 
-<form method="post" action="/login.php">
-    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
+        <?php if ($error !== ''): ?>
+            <p class="error"><?= htmlspecialchars($error) ?></p>
+        <?php endif; ?>
 
-    <p>
-        <label for="email">Email</label><br>
-        <input type="email" id="email" name="email" value="<?= htmlspecialchars($email) ?>" required>
-    </p>
+        <form method="post" action="/login.php" class="auth-form">
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
 
-    <p>
-        <label for="password">Пароль</label><br>
-        <input type="password" id="password" name="password" required>
-    </p>
+            <p>
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" value="<?= htmlspecialchars($email) ?>" required>
+            </p>
 
-    <button type="submit">Войти</button>
-</form>
+            <p>
+                <label for="password">Пароль</label>
+                <input type="password" id="password" name="password" required>
+            </p>
 
-<p>Нет аккаунта? <a href="/register.php">Зарегистрироваться</a></p>
+            <button class="btn btn-primary auth-submit" type="submit">Войти</button>
+        </form>
+
+        <p class="auth-switch">Нет аккаунта? <a href="/register.php">Зарегистрироваться</a></p>
+    </section>
+</main>
+
+<?php include __DIR__ . '/footer.php'; ?>
 </body>
 </html>
