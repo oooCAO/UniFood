@@ -17,7 +17,7 @@ requireRole(ROLE_ADMIN);
 $error = '';
 $venues = listVenues();
 
-$venueId = (int) ($_GET['venue_id'] ?? ($venues[0]['id'] ?? 0));
+$venueId = (int) ($_GET['venue_id'] ?? getDefaultVenueId($venues));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!checkCsrfToken($_POST['csrf_token'] ?? null)) {

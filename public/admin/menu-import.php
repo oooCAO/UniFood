@@ -40,7 +40,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $nameRu = (string) ($_POST['name_ru'] ?? '');
 
                 if ($dishId <= 0 || !updateDishNameRu($dishId, $nameRu)) {
-                    $error = 'Не удалось сохранить название: блюдо не найдено.';
+                    $source = $dishId > 0 ? getDishSource($dishId) : null;
+
+                    if ($source === null) {
+                        $error = 'Не удалось сохранить название: блюдо не найдено.';
+                    } elseif ($source !== 'market') {
+                        $error = 'Русское название задаётся только для блюд с сайта.';
+                    } else {
+                        $error = 'Не удалось сохранить название.';
+                    }
                 } else {
                     header('Location: /admin/menu-import.php');
                     exit;
