@@ -210,8 +210,9 @@ function getUserOrderWithItems(int $userId, int $orderId): ?array
  * бы на три часа раньше, чем она была на самом деле.
  *
  * @param int $orderId id заказа. Что заказ свой, проверяет вызывающий код.
- * @return array Записи по возрастанию времени: old_status, new_status,
- *               changed_by, changed_by_name, changed_at (DateTime в поясе Минска).
+ * @return array Записи по возрастанию времени: old_status, new_status, action
+ *               (null у записей смены статуса сотрудником), changed_by,
+ *               changed_by_name, changed_at (DateTime в поясе Минска).
  * @throws MongoDB\Driver\Exception\ConnectionException Если Mongo недоступна.
  */
 function getOrderStatusHistory(int $orderId): array
@@ -229,9 +230,13 @@ function getOrderStatusHistory(int $orderId): array
     foreach ($documents as $document) {
         $changedBy = (int) $document['changed_by'];
 
+        // action — необязательное поле (contract 2.3): его пишет студент при
+        // изменении слота/состава своего заказа, старые документы о смене
+        // статуса сотрудником его не содержат вовсе.
         $history[] = [
             'old_status' => (string) $document['old_status'],
             'new_status' => (string) $document['new_status'],
+            'action' => isset($document['action']) ? (string) $document['action'] : null,
             'changed_by' => $changedBy,
             'changed_at' => $document['changed_at']->toDateTime()->setTimezone(new DateTimeZone('Europe/Minsk')),
         ];
