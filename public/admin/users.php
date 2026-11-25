@@ -38,6 +38,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     if ($email === '' || $fullName === '' || $password === '') {
                         $error = 'Email, имя и пароль обязательны.';
+                    } elseif (mb_strlen($password) < 6) {
+                        // Та же минимальная длина, что при обычной регистрации (register.php).
+                        $error = 'Пароль должен быть не короче 6 символов.';
                     } elseif (createUser($email, $fullName, $password, $role, $venueId) === null) {
                         $error = 'Пользователь с таким email уже существует.';
                     } else {
