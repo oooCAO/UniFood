@@ -13,13 +13,23 @@ INSERT INTO users (email, password_hash, full_name, role) VALUES
     ('staff@unifood.test', '$2y$10$N1FOMTNPXELaQy90mtTlqON4NOmhJaDRBFFG1qSdedQ53GUf3SOYS', 'Тестовый Сотрудник', 'staff'),
     ('admin@unifood.test', '$2y$10$N1FOMTNPXELaQy90mtTlqON4NOmhJaDRBFFG1qSdedQ53GUf3SOYS', 'Тестовый Администратор', 'admin');
 
+-- Два реальных заведения ГрГУ (адреса с market.grsu.by). У «Главного корпуса»
+-- на сайте есть английская таблица меню — для него работает автоимпорт
+-- (menu_sources ниже). У «Захарова» меню на сайте только картинкой —
+-- блюда этого заведения ведёт администратор вручную.
 INSERT INTO venues (id, name, address, is_active) VALUES
-    (1, 'Столовая Главного корпуса', 'ул. Университетская, 1', 1),
-    (2, 'Кафе Политехнического корпуса', 'ул. Советская, 10', 1);
+    (1, 'Столовая Главного корпуса', 'ул. Ожешко, 22', 1),
+    (2, 'Столовая Захарова', 'ул. Захарова, 32', 1);
 
 -- Отдельным UPDATE, а не в INSERT INTO users: на момент вставки users
 -- строки venues ещё не существуют, FK бы не дал вставить venue_id сразу.
 UPDATE users SET venue_id = 1 WHERE email = 'staff@unifood.test';
+
+-- source_name — ровно та строка, которую parseEnglishMenu() достаёт из
+-- <summary> английской версии страницы (проверено реальной загрузкой
+-- market.grsu.by). Для «Захарова» строки нет: там нет английской таблицы.
+INSERT INTO menu_sources (venue_id, source_name) VALUES
+    (1, '1. Canteen №1 of GrSU, Ozheshko 22');
 
 INSERT INTO categories (id, venue_id, name, sort_order) VALUES
     (1, 1, 'Горячее', 1),
