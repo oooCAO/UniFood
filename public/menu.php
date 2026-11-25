@@ -8,6 +8,7 @@
  */
 
 require_once __DIR__ . '/../src/auth.php';
+require_once __DIR__ . '/../src/format.php';
 require_once __DIR__ . '/catalog-data.php';
 
 // Иначе шапка вызовет startSession() после вывода HTML и cookie сессии не уйдёт.
@@ -117,7 +118,7 @@ $shownVenues = $venue !== null ? [$venue] : $venues;
 
                             <p><?= htmlspecialchars($dish['description']) ?></p>
                             <p>
-                                <span class="dish-price"><?= number_format($dish['price'], 2, ',', ' ') ?> ₽</span>
+                                <span class="dish-price"><?= formatPrice((float) $dish['price']) ?></span>
                             </p>
 
                             <form method="post" action="/cart.php" data-cart-add>

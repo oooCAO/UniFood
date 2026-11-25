@@ -8,6 +8,7 @@
  */
 
 require_once __DIR__ . '/../src/auth.php';
+require_once __DIR__ . '/../src/format.php';
 require_once __DIR__ . '/catalog-data.php';
 
 // Иначе шапка вызовет startSession() после вывода HTML и cookie сессии не уйдёт.
@@ -81,7 +82,7 @@ $pageTitle = 'Блюдо — ' . $dishName . ' — UniFood';
             · Категория: <?= htmlspecialchars($categoryName) ?>
         </p>
         <p><?= htmlspecialchars($dish['description']) ?></p>
-        <p class="dish-price"><?= number_format($dish['price'], 2, ',', ' ') ?> ₽</p>
+        <p class="dish-price"><?= formatPrice((float) $dish['price']) ?></p>
 
         <form method="post" action="/cart.php" data-cart-add>
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
