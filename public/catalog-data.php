@@ -9,6 +9,9 @@
  */
 
 require_once __DIR__ . '/../src/db_mysql.php';
+// buildMenuImageUrl() собирает ссылку на картинку меню с market.grsu.by
+// по коду заведения — функция Разработчика 2, сами её не меняем.
+require_once __DIR__ . '/../src/venues.php';
 
 $venues = [];
 $categories = [];
@@ -19,13 +22,17 @@ try {
     $connection = getMysqlConnection();
 
     // Неактивные заведения студенту не показываем.
-    $stmt = $connection->prepare('SELECT id, name, address FROM venues WHERE is_active = 1 ORDER BY id');
+    $stmt = $connection->prepare('SELECT id, name, address, menu_image_code, menu_text FROM venues WHERE is_active = 1 ORDER BY id');
     $stmt->execute();
     foreach ($stmt->fetchAll() as $row) {
         $venues[] = [
             'id' => (int) $row['id'],
             'name' => (string) $row['name'],
             'address' => (string) $row['address'],
+            // Готовая ссылка на картинку дневного меню (или null, если код
+            // заведения не задан) — считаем её один раз здесь, а не в menu.php.
+            'menu_image_url' => buildMenuImageUrl($row['menu_image_code']),
+            'menu_text' => (string) ($row['menu_text'] ?? ''),
         ];
     }
 
