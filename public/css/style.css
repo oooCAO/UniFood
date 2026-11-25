@@ -28,11 +28,12 @@ body {
     font-size: 16px;
     line-height: 1.5;
     color: var(--color-text);
-    background-color: var(--color-bg);
-    /* Лёгкий узор из точек в цвет акцента: фон не выглядит пустым,
-       но не спорит с текстом и карточками. */
-    background-image: radial-gradient(rgba(47, 125, 79, 0.09) 1px, transparent 1px);
-    background-size: 20px 20px;
+    background-color: #f3f5ef;
+
+    /* Узор из силуэтов еды (пицца, напиток, яблоко, бургер) повторяется
+       по всей странице: фон не пустой, но не мешает читать текст. */
+    background-image: url("/css/food-pattern.svg");
+    background-size: 200px 200px;
 
     /* Подвал прижимается к низу окна, даже если страница короткая. */
     display: flex;
@@ -52,6 +53,10 @@ a:hover {
     max-width: 1100px;
     margin: 0 auto;
     padding: 0 20px;
+
+    /* В flex-колонке body авто-отступы отменяют растягивание по ширине,
+       и страница сжимается в одну колонку. Ширина 100% возвращает сетку. */
+    width: 100%;
 }
 
 /* Шапка и навигация */
