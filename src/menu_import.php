@@ -289,3 +289,62 @@ function runMenuImport(bool $dryRun = false): array
         ];
     }
 }
+
+/**
+ * Возвращает последний запуск импорта для страницы «Импорт меню».
+ *
+ * @return array|null Строка menu_import_runs или null, если импорт ещё не запускали.
+ */
+function getLatestMenuImportRun(): ?array
+{
+    $stmt = getMysqlConnection()->query(
+        'SELECT id, started_at, finished_at, status, dishes_added, dishes_updated, dishes_hidden, error_text
+         FROM menu_import_runs
+         ORDER BY id DESC
+         LIMIT 1'
+    );
+
+    $run = $stmt->fetch();
+
+    return $run === false ? null : $run;
+}
+
+/**
+ * Возвращает импортированные блюда для редактирования русского названия.
+ *
+ * @return array Список блюд source = market: id, name, name_ru, price, venue_name.
+ */
+function listMarketDishes(): array
+{
+    $stmt = getMysqlConnection()->query(
+        "SELECT dishes.id, dishes.name, dishes.name_ru, dishes.price, venues.name AS venue_name
+         FROM dishes
+         JOIN venues ON venues.id = dishes.venue_id
+         WHERE dishes.source = 'market'
+         ORDER BY venues.name, dishes.name"
+    );
+
+    return $stmt->fetchAll();
+}
+
+/**
+ * Сохраняет русское название импортированного блюда.
+ *
+ * Только для source = market: у ручных блюд название уже на русском,
+ * отдельный перевод им не нужен.
+ *
+ * @param int $dishId Id блюда.
+ * @param string $nameRu Русское название. Пустая строка сохраняется как NULL.
+ * @return bool true, если блюдо с таким id и source = market найдено и обновлено.
+ */
+function updateDishNameRu(int $dishId, string $nameRu): bool
+{
+    $nameRu = trim($nameRu);
+
+    $stmt = getMysqlConnection()->prepare(
+        "UPDATE dishes SET name_ru = ? WHERE id = ? AND source = 'market'"
+    );
+    $stmt->execute([$nameRu === '' ? null : $nameRu, $dishId]);
+
+    return $stmt->rowCount() > 0;
+}
