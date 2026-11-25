@@ -15,6 +15,7 @@
 
 require_once __DIR__ . '/../src/auth.php';
 require_once __DIR__ . '/../src/order.php';
+require_once __DIR__ . '/../src/format.php';
 
 // Заказ оформляет и меняет только вошедший студент, гостю — 401 как в cart.php.
 requireLogin();
@@ -340,13 +341,13 @@ $canSubmitOrder = !empty($cart) && !$cartHasUnavailable && !$cartHasMixedVenues;
             <tr>
                 <td><?= htmlspecialchars($item['name']) ?></td>
                 <td><?= (int) $item['quantity'] ?></td>
-                <td><?= number_format((float) $item['price'], 2, '.', '') ?></td>
-                <td><?= number_format((float) $item['price'] * (int) $item['quantity'], 2, '.', '') ?></td>
+                <td><?= formatPrice((float) $item['price']) ?></td>
+                <td><?= formatPrice((float) $item['price'] * (int) $item['quantity']) ?></td>
             </tr>
         <?php endforeach; ?>
     </table>
 
-    <p><strong>Итого: <?= number_format((float) $successOrder['total_price'], 2, '.', '') ?></strong></p>
+    <p><strong>Итого: <?= formatPrice((float) $successOrder['total_price']) ?></strong></p>
 
     <p>
         <a class="btn btn-primary" href="/orders.php?id=<?= (int) $successOrder['id'] ?>">Посмотреть заказ</a>
@@ -394,19 +395,19 @@ $canSubmitOrder = !empty($cart) && !$cartHasUnavailable && !$cartHasMixedVenues;
                                 (сейчас недоступно)
                             <?php endif; ?>
                         </td>
-                        <td><?= number_format((float) $dish['price'], 2, '.', '') ?></td>
+                        <td><?= formatPrice((float) $dish['price']) ?></td>
                         <td><?= (int) $quantity ?></td>
                         <?php
                         $sum = (float) $dish['price'] * (int) $quantity;
                         $total += $sum;
                         ?>
-                        <td><?= number_format($sum, 2, '.', '') ?></td>
+                        <td><?= formatPrice($sum) ?></td>
                     <?php endif; ?>
                 </tr>
             <?php endforeach; ?>
         </table>
 
-        <p><strong>Итого: <?= number_format($total, 2, '.', '') ?></strong></p>
+        <p><strong>Итого: <?= formatPrice($total) ?></strong></p>
 
         <?php if ($cartHasMixedVenues): ?>
             <p>В корзине блюда из разных заведений. Одним заказом их забрать нельзя: удалите лишние блюда в корзине.</p>

@@ -9,6 +9,7 @@
 
 require_once __DIR__ . '/../src/auth.php';
 require_once __DIR__ . '/../src/order.php';
+require_once __DIR__ . '/../src/format.php';
 
 // Запрос из site.js: гостю без AJAX показываем обычную страницу входа
 // (401 + текст), а не JSON, который не на чём показать.
@@ -159,7 +160,7 @@ $cartItems = getOrderItemsDetails($cart);
                     <?php endif; ?>
                 </td>
                 <td>
-                    <?= $dish === null ? '—' : number_format((float) $dish['price'], 2, '.', '') ?>
+                    <?= $dish === null ? '—' : formatPrice((float) $dish['price']) ?>
                 </td>
                 <td>
                     <form method="post" action="/cart.php">
