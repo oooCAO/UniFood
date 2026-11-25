@@ -75,6 +75,15 @@ services:
       - mysql
       - mongo
     restart: unless-stopped
+    # cron -f (Dockerfile CMD) не передаёт свои переменные окружения
+    # заданиям, которые запускает по расписанию (у них своё, пустое
+    # окружение) — поэтому перед запуском демона сохраняем DB_*/MONGO_*
+    # в файл, который docker/cron/crontab подключает перед каждым php.
+    # "export" обязателен: обычное "КЛЮЧ=значение" при подключении файла
+    # через ". файл" задаёт переменную только в текущем shell и не передаёт
+    # её дальше в php, который cron запускает отдельным процессом.
+    command: >
+      sh -c "env | grep -E '^(DB_|MONGO_)' | sed -E \"s/^([A-Z_]+)=(.*)$/export \\1='\\2'/\" > /etc/cron.d/unifood-env && cron -f"
 
   # MySQL 8: реляционные данные (пользователи, заказы, меню).
   mysql:
@@ -87,6 +96,10 @@ services:
       MYSQL_USER: "${MYSQL_USER}"
       MYSQL_PASSWORD: "${MYSQL_PASSWORD}"
       MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      # Слоты держатся только на "сегодня" (П.8): CURDATE()/CURTIME() внутри
+      # MySQL должны считать время так же, как PHP и cron (оба — Europe/Minsk),
+      # иначе "сегодня" в базе сдвигается по UTC в районе полуночи по Минску.
+      TZ: Europe/Minsk
     volumes:
       # Данные храним в именованном томе, чтобы они не пропадали при перезапуске.
       - mysql_data:/var/lib/mysql
