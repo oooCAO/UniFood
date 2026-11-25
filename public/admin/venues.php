@@ -21,6 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = $_POST['action'] ?? '';
         $name = trim($_POST['name'] ?? '');
         $address = trim($_POST['address'] ?? '');
+        $menuImageCode = trim($_POST['menu_image_code'] ?? '');
+        $menuText = trim($_POST['menu_text'] ?? '');
 
         switch ($action) {
             case 'add':
@@ -39,8 +41,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if ($id <= 0 || $name === '' || $address === '') {
                     $error = 'Название и адрес обязательны.';
+                } elseif ($menuImageCode !== '' && !preg_match('/^[a-zA-Z0-9]{1,10}$/', $menuImageCode)) {
+                    $error = 'Код картинки меню: только латинские буквы и цифры, до 10 символов.';
+                } elseif (mb_strlen($menuText) > 5000) {
+                    $error = 'Текст меню слишком длинный (максимум 5000 символов).';
                 } else {
-                    updateVenue($id, $name, $address, $isActive);
+                    updateVenue($id, $name, $address, $isActive, $menuImageCode, $menuText);
                     header('Location: /admin/venues.php');
                     exit;
                 }
@@ -71,6 +77,14 @@ include __DIR__ . '/admin-header.php';
                 <input type="hidden" name="id" value="<?= (int) $venue['id'] ?>">
                 <input type="text" name="name" value="<?= htmlspecialchars($venue['name']) ?>" required>
                 <input type="text" name="address" value="<?= htmlspecialchars($venue['address']) ?>" required>
+                <label>
+                    Код картинки меню (например «oz»):
+                    <input type="text" name="menu_image_code" value="<?= htmlspecialchars($venue['menu_image_code'] ?? '') ?>" maxlength="10" placeholder="oz">
+                </label>
+                <label>
+                    Текст меню:
+                    <textarea name="menu_text" rows="6" placeholder="Показывается на странице меню заведения"><?= htmlspecialchars($venue['menu_text'] ?? '') ?></textarea>
+                </label>
                 <label>
                     <input type="checkbox" name="is_active" value="1" <?= $venue['is_active'] ? 'checked' : '' ?>>
                     Активно
