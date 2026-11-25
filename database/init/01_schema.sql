@@ -22,6 +22,15 @@ CREATE TABLE venues (
     address VARCHAR(255) NOT NULL,
     -- Показывать ли заведение студенту при выборе места получения.
     is_active TINYINT(1) NOT NULL DEFAULT 1,
+    -- Код заведения в имени файла картинки меню на market.grsu.by
+    -- (например 'oz', 'zah'). Полный URL картинки собирается на лету
+    -- по текущей дате (buildMenuImageUrl() в src/venues.php) — картинка
+    -- на сайте перезаливается каждый день с датой в имени файла, поэтому
+    -- хранить готовую ссылку в БД бессмысленно, она устареет за день.
+    menu_image_code VARCHAR(10) NULL,
+    -- Текст меню для страницы заведения (для столовых без автоимпорта
+    -- блюд, например «Захарова»). NULL, пока админ не заполнил вручную.
+    menu_text TEXT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
