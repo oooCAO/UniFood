@@ -46,19 +46,44 @@ function getCategoryById(int $id): ?array
 /**
  * Добавляет новую категорию в заведение.
  *
+ * Проверяет, что заведение существует, до INSERT: без этой проверки
+ * несуществующий venue_id (например, подставленный прямым POST) давал
+ * необработанный PDOException с утечкой пути и SQL в ответе страницы.
+ * Также не даёт создать вторую категорию с тем же названием в том же
+ * заведении — иначе в каталоге появляются двойники.
+ *
  * @param int $venueId Id заведения, которому принадлежит категория.
  * @param string $name Название категории.
  * @param int $sortOrder Порядок показа в меню.
- * @return int Id созданной категории.
+ * @return int|null Id созданной категории или null, если заведения нет
+ *   или в нём уже есть категория с таким названием.
  */
-function createCategory(int $venueId, string $name, int $sortOrder): int
+function createCategory(int $venueId, string $name, int $sortOrder): ?int
 {
-    $stmt = getMysqlConnection()->prepare(
+    $pdo = getMysqlConnection();
+
+    $stmt = $pdo->prepare('SELECT id FROM venues WHERE id = ?');
+    $stmt->execute([$venueId]);
+
+    if ($stmt->fetch() === false) {
+        return null;
+    }
+
+    $name = trim($name);
+
+    $stmt = $pdo->prepare('SELECT id FROM categories WHERE venue_id = ? AND name = ?');
+    $stmt->execute([$venueId, $name]);
+
+    if ($stmt->fetch() !== false) {
+        return null;
+    }
+
+    $insert = $pdo->prepare(
         'INSERT INTO categories (venue_id, name, sort_order) VALUES (?, ?, ?)'
     );
-    $stmt->execute([$venueId, trim($name), $sortOrder]);
+    $insert->execute([$venueId, $name, $sortOrder]);
 
-    return (int) getMysqlConnection()->lastInsertId();
+    return (int) $pdo->lastInsertId();
 }
 
 /**

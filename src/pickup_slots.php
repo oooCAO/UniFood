@@ -33,21 +33,34 @@ function listSlots(int $venueId): array
 /**
  * Добавляет новый слот.
  *
+ * Проверяет, что заведение существует, до INSERT: без этой проверки
+ * несуществующий venue_id давал необработанный PDOException с утечкой
+ * пути и SQL в ответе страницы.
+ *
  * @param int $venueId Id заведения.
  * @param string $date Дата слота (YYYY-MM-DD).
  * @param string $startTime Время начала (HH:MM или HH:MM:SS).
  * @param string $endTime Время конца.
  * @param int $capacity Максимум заказов на слот.
- * @return int Id созданного слота.
+ * @return int|null Id созданного слота или null, если заведения не существует.
  */
-function createSlot(int $venueId, string $date, string $startTime, string $endTime, int $capacity): int
+function createSlot(int $venueId, string $date, string $startTime, string $endTime, int $capacity): ?int
 {
-    $stmt = getMysqlConnection()->prepare(
+    $pdo = getMysqlConnection();
+
+    $stmt = $pdo->prepare('SELECT id FROM venues WHERE id = ?');
+    $stmt->execute([$venueId]);
+
+    if ($stmt->fetch() === false) {
+        return null;
+    }
+
+    $insert = $pdo->prepare(
         'INSERT INTO pickup_slots (venue_id, slot_date, start_time, end_time, capacity) VALUES (?, ?, ?, ?, ?)'
     );
-    $stmt->execute([$venueId, $date, $startTime, $endTime, $capacity]);
+    $insert->execute([$venueId, $date, $startTime, $endTime, $capacity]);
 
-    return (int) getMysqlConnection()->lastInsertId();
+    return (int) $pdo->lastInsertId();
 }
 
 /**
