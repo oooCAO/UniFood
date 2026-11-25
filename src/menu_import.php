@@ -328,6 +328,25 @@ function listMarketDishes(): array
 }
 
 /**
+ * Возвращает источник блюда по id, не фильтруя по source.
+ *
+ * Нужна только для текста ошибки на странице «Импорт меню»: отличить
+ * «блюда с таким id вообще нет» от «блюдо есть, но оно не с сайта».
+ *
+ * @param int $dishId Id блюда.
+ * @return string|null 'manual'/'market' или null, если блюда с таким id нет.
+ */
+function getDishSource(int $dishId): ?string
+{
+    $stmt = getMysqlConnection()->prepare('SELECT source FROM dishes WHERE id = ?');
+    $stmt->execute([$dishId]);
+
+    $source = $stmt->fetchColumn();
+
+    return $source === false ? null : $source;
+}
+
+/**
  * Сохраняет русское название импортированного блюда.
  *
  * Только для source = market: у ручных блюд название уже на русском,

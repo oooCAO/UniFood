@@ -30,6 +30,27 @@ function listVenues(bool $onlyActive = false): array
 }
 
 /**
+ * Выбирает заведение по умолчанию для страниц админки с выбором заведения.
+ *
+ * Предпочитает первое активное: иначе страница по умолчанию может
+ * открыться на скрытом заведении и выглядеть пустой (например, если
+ * оно отсортировано по названию раньше остальных).
+ *
+ * @param array $venues Список заведений, как возвращает listVenues().
+ * @return int Id заведения по умолчанию или 0, если список пуст.
+ */
+function getDefaultVenueId(array $venues): int
+{
+    foreach ($venues as $venue) {
+        if ($venue['is_active']) {
+            return (int) $venue['id'];
+        }
+    }
+
+    return (int) ($venues[0]['id'] ?? 0);
+}
+
+/**
  * Возвращает одно заведение по id.
  *
  * @param int $id Id заведения.
