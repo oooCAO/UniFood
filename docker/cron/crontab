@@ -1,0 +1,4 @@
+# Ежедневный импорт меню market.grsu.by в каталог UniFood.
+# Контейнер работает по Europe/Minsk (см. Dockerfile), поэтому время локальное.
+# Вывод перенаправляем в stdout контейнера: docker compose logs cron.
+0 7 * * * root php /var/www/html/bin/import_menu.php >> /proc/1/fd/1 2>&1
