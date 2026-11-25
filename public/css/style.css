@@ -109,6 +109,12 @@ a:hover {
     text-align: center;
 }
 
+/* Счётчик всегда в разметке (нужно site.js), при нуле порций скрываем
+   атрибутом hidden, а не удалением из DOM. */
+.cart-count[hidden] {
+    display: none;
+}
+
 /* Пометка «Меню на сегодня» у блюд, импортированных с сайта. */
 .badge {
     display: inline-block;
@@ -188,8 +194,11 @@ main {
 }
 
 /* На главной карточки заведений одного вида: фон темнее страницы,
-   кнопка прижата к низу, поэтому карточки в ряду выглядят ровно. */
+   кнопка прижата к низу, поэтому карточки в ряду выглядят ровно.
+   position: relative нужен, чтобы оверлей кнопки (.btn::after) растянулся
+   именно на эту карточку, а не на весь документ. */
 .venue-grid .card {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -199,6 +208,15 @@ main {
 .venue-grid .card .btn {
     margin-top: auto;
     align-self: flex-start;
+}
+
+/* Кликабельная карточка целиком без вложенных ссылок и JS: прозрачный
+   псевдоэлемент кнопки растягивается на всю карточку (inset: 0),
+   сама кнопка остаётся на месте и видна поверх текста. */
+.venue-grid .card .btn::after {
+    content: "";
+    position: absolute;
+    inset: 0;
 }
 
 .venue-grid .card p:last-of-type {
@@ -359,51 +377,6 @@ input[type="number"] {
     font-weight: bold;
 }
 
-/* Меню на сегодня */
-
-/* Карточки столовых идут сеткой, как каталог, но картинки меню
-   высокие, поэтому минимум колонки больше. */
-.today-menu-source {
-    margin: 0 0 20px;
-}
-
-.today-menu-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 20px;
-}
-
-.today-menu-card {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-/* Название столовой оформлено как заголовок карточки в каталоге. */
-.today-menu-canteen {
-    margin: 0;
-    font-size: 19px;
-}
-
-.today-menu-images {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.today-menu-image-link {
-    display: block;
-}
-
-.today-menu-image {
-    display: block;
-    width: 100%;
-    height: auto;
-    border: 1px solid var(--color-border);
-    border-radius: 6px;
-    background: #ffffff;
-}
-
 /* Таблицы и сообщения */
 
 table {
@@ -489,9 +462,5 @@ th {
 
     .auth-title {
         font-size: 23px;
-    }
-
-    .today-menu-list {
-        grid-template-columns: 1fr;
     }
 }
