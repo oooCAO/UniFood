@@ -1,16 +1,16 @@
 <?php
 /**
- * CLI-скрипт ручной проверки импорта меню с market.grsu.by.
- *
- * Скрипт только скачивает и разбирает меню. В базу он ничего не пишет:
- * синхронизация с каталогом появится в отдельной задаче.
+ * CLI-скрипт импорта меню с market.grsu.by в каталог блюд.
  *
  * Запуск:
- *   php bin/import_menu.php --dry-run
- *   php bin/import_menu.php --json
+ *   php bin/import_menu.php              Выполнить импорт (пишет в БД)
+ *   php bin/import_menu.php --dry-run    Показать, что будет сделано, без записи в БД
+ *   php bin/import_menu.php --json       Вывести разобранные сайтом данные в JSON (без БД)
+ *   php bin/import_menu.php --help       Показать подсказку
  */
 
 require_once __DIR__ . '/../src/external_menu.php';
+require_once __DIR__ . '/../src/menu_import.php';
 
 // Скрипт запускается только из консоли: из браузера он не должен быть доступен.
 if (PHP_SAPI !== 'cli') {
@@ -25,72 +25,42 @@ if (PHP_SAPI !== 'cli') {
 function printImportMenuUsage(): void
 {
     echo "Использование:\n";
-    echo "  php bin/import_menu.php --dry-run   Загрузить меню и показать сводку\n";
-    echo "  php bin/import_menu.php --json      Вывести разобранные данные в JSON\n";
-    echo "  php bin/import_menu.php --help      Показать эту подсказку\n";
+    echo "  php bin/import_menu.php              Выполнить импорт (пишет в БД)\n";
+    echo "  php bin/import_menu.php --dry-run    Показать, что будет сделано, без записи в БД\n";
+    echo "  php bin/import_menu.php --json       Вывести разобранные сайтом данные в JSON\n";
+    echo "  php bin/import_menu.php --help       Показать эту подсказку\n";
 }
 
 /**
- * Печатает краткую сводку по разобранному меню.
+ * Печатает результат импорта (настоящего или пробного).
  *
- * @param array $russian Результат parseRussianMenu().
- * @param array $english Результат parseEnglishMenu().
+ * @param array{success: bool, added: int, updated: int, hidden: int, skipped_sources: array<int, string>, error: string|null} $result
+ *   Результат runMenuImport().
+ * @param bool $dryRun Пробный запуск или настоящий — меняет только текст заголовка.
  * @return void
  */
-function printImportMenuSummary(array $russian, array $english): void
+function printImportMenuResult(array $result, bool $dryRun): void
 {
-    $russianCanteens = count($russian['canteens']);
-    $russianImages = 0;
-
-    foreach ($russian['canteens'] as $canteen) {
-        $russianImages += count($canteen['images']);
-    }
-
-    $englishCanteens = count($english['canteens']);
-    $categoriesCount = 0;
-    $dishesCount = 0;
-    $examples = [];
-
-    foreach ($english['canteens'] as $canteen) {
-        $categoriesCount += count($canteen['categories']);
-
-        foreach ($canteen['categories'] as $category) {
-            $dishesCount += count($category['dishes']);
-
-            foreach ($category['dishes'] as $dish) {
-                if (count($examples) >= 5) {
-                    continue;
-                }
-
-                $examples[] = $dish;
-            }
-        }
-    }
-
-    echo "Меню загружено и разобрано.\n";
-    echo "Русская версия: столовых — {$russianCanteens}, картинок — {$russianImages}.\n";
-    echo "Английская версия: столовых — {$englishCanteens}, категорий — {$categoriesCount}, блюд — {$dishesCount}.\n";
-
-    if ($examples === []) {
+    if (!$result['success']) {
+        echo 'Импорт не выполнен: ' . $result['error'] . PHP_EOL;
         return;
     }
 
-    echo "\nПримеры блюд:\n";
+    echo $dryRun
+        ? "Пробный запуск (в БД ничего не записано):\n"
+        : "Импорт выполнен:\n";
+    echo "  добавлено: {$result['added']}\n";
+    echo "  обновлено: {$result['updated']}\n";
+    echo "  скрыто (пропали из меню): {$result['hidden']}\n";
 
-    foreach ($examples as $dish) {
-        $price = $dish['price'] !== null ? number_format($dish['price'], 2, '.', '') : 'цена не указана';
-        $details = [];
+    if ($result['skipped_sources'] === []) {
+        return;
+    }
 
-        if ($dish['kcal'] !== null) {
-            $details[] = $dish['kcal'] . ' ккал';
-        }
+    echo "\nСтоловые без сопоставления в menu_sources (пропущены):\n";
 
-        if ($dish['output'] !== '') {
-            $details[] = 'выход ' . $dish['output'];
-        }
-
-        $suffix = $details !== [] ? ' (' . implode(', ', $details) . ')' : '';
-        echo "  - {$dish['name']} — {$price}{$suffix}\n";
+    foreach ($result['skipped_sources'] as $sourceName) {
+        echo "  - {$sourceName}\n";
     }
 }
 
@@ -109,34 +79,21 @@ if (in_array('--help', $arguments, true)) {
     exit(0);
 }
 
-$dryRun = in_array('--dry-run', $arguments, true);
-$outputJson = in_array('--json', $arguments, true);
+if (in_array('--json', $arguments, true)) {
+    try {
+        $russianMenu = parseRussianMenu(fetchRussianMenuHtml());
+        $englishMenu = parseEnglishMenu(fetchEnglishMenuHtml());
+    } catch (Throwable $error) {
+        fwrite(STDERR, 'Ошибка загрузки меню: ' . $error->getMessage() . PHP_EOL);
+        exit(1);
+    }
 
-try {
-    $russianHtml = fetchRussianMenuHtml();
-    $englishHtml = fetchEnglishMenuHtml();
-
-    $russianMenu = parseRussianMenu($russianHtml);
-    $englishMenu = parseEnglishMenu($englishHtml);
-} catch (Throwable $error) {
-    // Без понятного сообщения cron в будущем будет молча падать.
-    fwrite(STDERR, 'Ошибка импорта меню: ' . $error->getMessage() . PHP_EOL);
-    exit(1);
-}
-
-if ($outputJson) {
-    $debugData = [
-        'russian' => $russianMenu,
-        'english' => $englishMenu,
-    ];
-
-    echo json_encode($debugData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . PHP_EOL;
+    echo json_encode(['russian' => $russianMenu, 'english' => $englishMenu], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) . PHP_EOL;
     exit(0);
 }
 
-if (!$dryRun) {
-    fwrite(STDERR, 'Запись в БД будет добавлена позже. Сейчас доступны только --dry-run и --json.' . PHP_EOL);
-    exit(1);
-}
+$dryRun = in_array('--dry-run', $arguments, true);
+$result = runMenuImport($dryRun);
 
-printImportMenuSummary($russianMenu, $englishMenu);
+printImportMenuResult($result, $dryRun);
+exit($result['success'] ? 0 : 1);
