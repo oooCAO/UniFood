@@ -103,10 +103,11 @@ $shownVenues = $venue !== null ? [$venue] : $venues;
                                 <span class="dish-price"><?= number_format($dish['price'], 2, ',', ' ') ?> ₽</span>
                             </p>
 
-                            <form method="post" action="/cart.php">
+                            <form method="post" action="/cart.php" data-cart-add>
                                 <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
                                 <input type="hidden" name="action" value="add">
                                 <input type="hidden" name="dish_id" value="<?= (int) $dish['id'] ?>">
+                                <input type="hidden" name="return_to" value="<?= htmlspecialchars($_SERVER['REQUEST_URI'] ?? '/') ?>">
                                 <button class="btn btn-primary" type="submit">В корзину</button>
                             </form>
                         </article>
