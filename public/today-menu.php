@@ -52,16 +52,16 @@ $pageTitle = 'Меню на сегодня — UniFood';
             <div class="today-menu-list">
                 <?php foreach ($canteens as $canteen): ?>
                     <article class="card today-menu-card">
-                        <h3 class="today-menu-canteen"><?= htmlspecialchars($canteen['name']) ?></h3>
+                        <h2 class="today-menu-canteen"><?= htmlspecialchars($canteen['name']) ?></h2>
 
                         <div class="today-menu-images">
-                            <?php foreach ($canteen['images'] as $imageUrl): ?>
+                            <?php foreach ($canteen['images'] as $imageIndex => $imageUrl): ?>
                                 <?php $safeImageUrl = htmlspecialchars($imageUrl); ?>
                                 <a class="today-menu-image-link" href="<?= $safeImageUrl ?>" target="_blank" rel="noopener">
                                     <img
                                         class="today-menu-image"
                                         src="<?= $safeImageUrl ?>"
-                                        alt="Меню: <?= htmlspecialchars($canteen['name']) ?>"
+                                        alt="Меню столовой «<?= htmlspecialchars($canteen['name']) ?>», фото <?= (int) $imageIndex + 1 ?>"
                                         loading="lazy"
                                     >
                                 </a>
