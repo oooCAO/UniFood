@@ -22,9 +22,9 @@ $currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 
         <nav class="main-nav">
             <a href="/" class="<?= $currentPath === '/' ? 'active' : '' ?>">Заведения</a>
-            <a href="/menu.php" class="<?= in_array($currentPath, ['/menu.php', '/dish.php'], true) ? 'active' : '' ?>">Меню</a>
-            <a href="/today-menu.php" class="<?= $currentPath === '/today-menu.php' ? 'active' : '' ?>">Меню на сегодня</a>
-            <a href="/cart.php" class="<?= $currentPath === '/cart.php' ? 'active' : '' ?>">Корзина<?php if ($cartCount > 0): ?> <span class="cart-count"><?= (int) $cartCount ?></span><?php endif; ?></a>
+            <a class="cart-link<?= $currentPath === '/cart.php' ? ' active' : '' ?>" href="/cart.php">Корзина
+                <span class="cart-count" data-cart-count<?= $cartCount > 0 ? '' : ' hidden' ?>><?= (int) $cartCount ?></span>
+            </a>
 
             <?php if (isLoggedIn()): ?>
                 <?php if ($currentRole === ROLE_STUDENT): ?>

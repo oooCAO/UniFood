@@ -14,6 +14,14 @@ require_once __DIR__ . '/catalog-data.php';
 startSession();
 
 $venueId = (int) ($_GET['venue'] ?? 0);
+
+// Без параметра venue ссылка «Меню» больше не отдельный раздел — старые
+// ссылки из закладок ведут на главную, а не на список всех столовых подряд.
+if ($venueId <= 0) {
+    header('Location: /');
+    exit;
+}
+
 $venue = null;
 
 foreach ($venues as $item) {
@@ -24,7 +32,7 @@ foreach ($venues as $item) {
 }
 
 // Неизвестное или отключённое заведение — это 404, а не всё меню подряд.
-if ($venueId > 0 && $venue === null) {
+if ($venue === null) {
     http_response_code(404);
     include __DIR__ . '/404.php';
     exit;
@@ -90,14 +98,9 @@ $shownVenues = $venue !== null ? [$venue] : $venues;
                         <article class="card dish-card">
                             <h3><?= htmlspecialchars($dishName) ?></h3>
 
-                            <?php if ($dish['source'] === 'market'): ?>
-                                <p class="dish-source"><a class="badge" href="/today-menu.php">Меню на сегодня</a></p>
-                            <?php endif; ?>
-
                             <p><?= htmlspecialchars($dish['description']) ?></p>
                             <p>
                                 <span class="dish-price"><?= number_format($dish['price'], 2, ',', ' ') ?> ₽</span>
-                                <a href="/dish.php?id=<?= (int) $dish['id'] ?>">Подробнее</a>
                             </p>
 
                             <form method="post" action="/cart.php">

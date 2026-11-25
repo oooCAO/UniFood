@@ -75,10 +75,6 @@ $pageTitle = 'Блюдо — ' . $dishName . ' — UniFood';
 
     <h1 class="page-title"><?= htmlspecialchars($dishName) ?></h1>
 
-    <?php if ($dish['source'] === 'market'): ?>
-        <p class="dish-source"><a class="badge" href="/today-menu.php">Меню на сегодня</a></p>
-    <?php endif; ?>
-
     <article class="card dish-details">
         <p class="text-muted">
             Заведение: <a href="/menu.php?venue=<?= (int) $dish['venue_id'] ?>"><?= htmlspecialchars($venueName) ?></a>
