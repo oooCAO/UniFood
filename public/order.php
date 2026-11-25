@@ -254,7 +254,7 @@ $canSubmitOrder = !empty($cart) && !$cartHasUnavailable && !$cartHasMixedVenues;
                 <?php foreach ($editOrder['items'] as $item): ?>
                     <tr>
                         <td><?= htmlspecialchars($item['name']) ?></td>
-                        <td><?= number_format((float) $item['price'], 2, '.', '') ?></td>
+                        <td><?= formatPrice((float) $item['price']) ?></td>
                         <td>
                             <input type="number" name="items[<?= (int) $item['dish_id'] ?>]"
                                    min="0" max="99" value="<?= (int) $item['quantity'] ?>">
@@ -272,7 +272,7 @@ $canSubmitOrder = !empty($cart) && !$cartHasUnavailable && !$cartHasMixedVenues;
                         <?php foreach ($editVenueDishes as $dish): ?>
                             <option value="<?= (int) $dish['id'] ?>">
                                 <?= htmlspecialchars($dish['name']) ?>
-                                (<?= number_format((float) $dish['price'], 2, '.', '') ?>)
+                                (<?= formatPrice((float) $dish['price']) ?>)
                             </option>
                         <?php endforeach; ?>
                     </select>
@@ -308,7 +308,7 @@ $canSubmitOrder = !empty($cart) && !$cartHasUnavailable && !$cartHasMixedVenues;
                 <?php endif; ?>
             </p>
 
-            <p><strong>Текущий итог: <?= number_format($editTotal, 2, '.', '') ?></strong>
+            <p><strong>Текущий итог: <?= formatPrice($editTotal) ?></strong>
                 (после изменения сумма будет пересчитана)</p>
 
             <?php if (!empty($editVenueSlots)): ?>
