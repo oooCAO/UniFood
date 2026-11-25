@@ -13,6 +13,9 @@ require_once __DIR__ . '/../../src/pickup_slots.php';
 requireRole(ROLE_ADMIN);
 
 $error = '';
+// Сообщение об успехе после PRG-редиректа (например, результат генерации
+// слотов) приходит через GET и выводится один раз — F5 его не повторяет.
+$notice = (string) ($_GET['message'] ?? '');
 $venues = listVenues();
 
 $venueId = (int) ($_GET['venue_id'] ?? getDefaultVenueId($venues));
@@ -27,6 +30,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $startTime = $_POST['start_time'] ?? '';
         $endTime = $_POST['end_time'] ?? '';
         $capacity = (int) ($_POST['capacity'] ?? 0);
+
+        // Генерация не требует даты/времени/вместимости из формы — это
+        // отдельная ветка действий, обрабатываем её раньше общей проверки.
+        if ($action === 'generate') {
+            try {
+                $result = generateSlotsForDate(date('Y-m-d'));
+                $message = "Создано: {$result['created']}, уже было: {$result['skipped']}";
+
+                header('Location: /admin/slots.php?venue_id=' . $venueId . '&message=' . rawurlencode($message));
+                exit;
+            } catch (Throwable $exception) {
+                // Текст для админа фиксирован (C11), техническую причину
+                // оставляем только в логе сервера.
+                error_log('generateSlotsForDate: ' . $exception->getMessage());
+                $error = 'Не удалось сгенерировать слоты. Попробуйте ещё раз.';
+            }
+        }
 
         if ($date === '' || $startTime === '' || $endTime === '' || $capacity <= 0) {
             $error = 'Дата, время и вместимость (больше нуля) обязательны.';
@@ -73,6 +93,10 @@ include __DIR__ . '/admin-header.php';
     <p class="error"><?= htmlspecialchars($error) ?></p>
 <?php endif; ?>
 
+<?php if ($notice !== ''): ?>
+    <p class="notice"><?= htmlspecialchars($notice) ?></p>
+<?php endif; ?>
+
 <?php if (empty($venues)): ?>
     <p class="notice">Сначала нужно добавить заведение.</p>
 <?php else: ?>
@@ -87,6 +111,13 @@ include __DIR__ . '/admin-header.php';
                 <?php endforeach; ?>
             </select>
         </label>
+    </form>
+
+    <form method="post" action="/admin/slots.php" class="admin-form">
+        <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
+        <input type="hidden" name="action" value="generate">
+        <input type="hidden" name="venue_id" value="<?= (int) $venueId ?>">
+        <button type="submit">Сгенерировать слоты на сегодня</button>
     </form>
 
     <ul class="admin-list">

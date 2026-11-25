@@ -54,32 +54,26 @@ INSERT INTO dishes (venue_id, category_id, name, description, price, is_availabl
     (2, 3, 'Пирожок с вишней', '', 1.80, 1),
     (2, 4, 'Кофе', 'Americano', 2.50, 1);
 
--- Слоты на 7 дней вперёд от момента создания базы, а не на фиксированные
--- даты: иначе через несколько дней после docker compose up все слоты
--- окажутся в прошлом, и студент не сможет оформить заказ ни на одно время.
--- days — таблица смещений 0..6, slot_templates — время/вместимость на
--- каждый день для каждого заведения; CROSS JOIN даёт по одному набору
--- слотов на каждый из 7 дней.
+-- Слоты только на сегодня (решение заказчика П.8): 09:00–17:00, шаг 15 минут,
+-- capacity = 20, для каждого активного заведения — 32 слота × 2 заведения = 64
+-- строки. Слотов на будущие дни не держим: их создаёт bin/generate_slots.php
+-- (вручную или по cron в 00:05 — настраивает Разработчик 3), иначе на
+-- следующий день после docker compose up сайт было бы нельзя проверить.
+-- steps — числа 0..31 (32 пятнадцатиминутки с 09:00 до 17:00).
 INSERT INTO pickup_slots (venue_id, slot_date, start_time, end_time, capacity, is_active)
-WITH RECURSIVE days(offset_days) AS (
+WITH RECURSIVE steps(n) AS (
     SELECT 0
     UNION ALL
-    SELECT offset_days + 1 FROM days WHERE offset_days < 6
+    SELECT n + 1 FROM steps WHERE n < 31
 )
-SELECT slot_templates.venue_id,
-       CURDATE() + INTERVAL days.offset_days DAY,
-       slot_templates.start_time,
-       slot_templates.end_time,
-       slot_templates.capacity,
-       slot_templates.is_active
-FROM days
-CROSS JOIN (
-    SELECT 1 AS venue_id, '12:00:00' AS start_time, '12:15:00' AS end_time, 20 AS capacity, 1 AS is_active
-    UNION ALL
-    SELECT 1, '12:15:00', '12:30:00', 20, 1
-    UNION ALL
-    SELECT 2, '13:00:00', '13:15:00', 15, 1
-) AS slot_templates;
+SELECT venues.id,
+       CURDATE(),
+       ADDTIME('09:00:00', SEC_TO_TIME(steps.n * 15 * 60)),
+       ADDTIME('09:00:00', SEC_TO_TIME((steps.n + 1) * 15 * 60)),
+       20,
+       1
+FROM steps
+CROSS JOIN (SELECT id FROM venues WHERE is_active = 1) AS venues;
 
 -- Один неактивный слот только на сегодня — для проверки, что такой слот
 -- нельзя выбрать. На все 7 дней он не нужен, поэтому не в CROSS JOIN выше.

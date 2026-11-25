@@ -80,7 +80,11 @@ CREATE TABLE pickup_slots (
     -- по orders.slot_id, отдельный счётчик не держим, чтобы не расходился с фактом.
     capacity INT UNSIGNED NOT NULL,
     is_active TINYINT(1) NOT NULL DEFAULT 1,
-    FOREIGN KEY (venue_id) REFERENCES venues(id)
+    FOREIGN KEY (venue_id) REFERENCES venues(id),
+    -- Один и тот же слот (заведение + дата + время начала) не должен
+    -- создаваться повторно: на этом держится идемпотентность
+    -- generateSlotsForDate() — повторный запуск не плодит дубли.
+    UNIQUE KEY uq_pickup_slots_venue_date_start (venue_id, slot_date, start_time)
 ) ENGINE=InnoDB;
 
 CREATE TABLE orders (
