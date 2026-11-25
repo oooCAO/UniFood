@@ -65,6 +65,23 @@ $shownVenues = $venue !== null ? [$venue] : $venues;
 
     <?php if ($venue !== null): ?>
         <p class="text-muted"><?= htmlspecialchars($venue['address']) ?></p>
+
+        <?php if ($venue['menu_image_url'] !== null || $venue['menu_text'] !== ''): ?>
+            <div class="venue-menu">
+                <?php if ($venue['menu_image_url'] !== null): ?>
+                    <img
+                        class="venue-menu-image"
+                        src="<?= htmlspecialchars($venue['menu_image_url']) ?>"
+                        alt="Меню: <?= htmlspecialchars($venue['name']) ?>"
+                        loading="lazy"
+                    >
+                <?php endif; ?>
+
+                <?php if ($venue['menu_text'] !== ''): ?>
+                    <div class="venue-menu-text"><?= nl2br(htmlspecialchars($venue['menu_text'])) ?></div>
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
 
     <p class="text-muted">Цены указаны за одну порцию.</p>
