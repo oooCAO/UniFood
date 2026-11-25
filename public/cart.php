@@ -10,22 +10,33 @@
 require_once __DIR__ . '/../src/auth.php';
 require_once __DIR__ . '/../src/order.php';
 
+// Запрос из site.js: гостю без AJAX показываем обычную страницу входа
+// (401 + текст), а не JSON, который не на чём показать.
+$isAjax = isAjaxRequest();
+
+if ($isAjax && !isLoggedIn()) {
+    sendAddToCartJson(false, 'Нужно войти в аккаунт.', 401);
+}
+
 // Корзина есть только у вошедшего пользователя, гостя отправляем на вход.
 requireLogin();
 
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $action = $_POST['action'] ?? '';
+    $dishId = (int) ($_POST['dish_id'] ?? 0);
+
+    // Количество проверяем строкой до приведения к int: иначе «abc»
+    // превратился бы в 0 и позиция молча удалилась бы.
+    $rawQuantity = trim((string) ($_POST['quantity'] ?? ''));
+
     if (!checkCsrfToken($_POST['csrf_token'] ?? null)) {
+        if ($isAjax && $action === 'add') {
+            sendAddToCartJson(false, 'Форма устарела. Обновите страницу.');
+        }
         $error = 'Форма устарела. Обновите страницу и попробуйте снова.';
     } else {
-        $action = $_POST['action'] ?? '';
-        $dishId = (int) ($_POST['dish_id'] ?? 0);
-
-        // Количество проверяем строкой до приведения к int: иначе «abc»
-        // превратился бы в 0 и позиция молча удалилась бы.
-        $rawQuantity = trim((string) ($_POST['quantity'] ?? ''));
-
         switch ($action) {
             case 'add':
                 // Кнопка «В корзину» шлёт только id блюда, но POST можно
@@ -34,19 +45,38 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $dish = getOrderItemsDetails([$dishId => 1])[$dishId] ?? null;
 
                 if ($dish === null) {
+                    if ($isAjax) {
+                        sendAddToCartJson(false, 'Блюдо не найдено.');
+                    }
                     $error = 'Блюдо не найдено.';
                     break;
                 }
 
                 if ((int) $dish['is_available'] !== 1) {
+                    if ($isAjax) {
+                        sendAddToCartJson(false, 'Блюдо сейчас недоступно.');
+                    }
                     $error = 'Блюдо сейчас недоступно.';
                     break;
                 }
 
+                // Без return_to возвращаем в меню заведения этого блюда:
+                // getOrderItemsDetails() уже знает venue_id, JOIN'иться
+                // за ним отдельно не нужно.
+                $fallback = '/menu.php?venue=' . (int) $dish['venue_id'];
+                $returnTo = getSafeReturnPath($_POST['return_to'] ?? null, $fallback);
+
                 // Добавляем по одной порции: кнопка «В корзину» всегда шлёт 1.
                 if (addToCart($dishId, 1)) {
-                    header('Location: /cart.php');
+                    if ($isAjax) {
+                        sendAddToCartJson(true, 'Добавлено в корзину');
+                    }
+                    header('Location: ' . $returnTo);
                     exit;
+                }
+
+                if ($isAjax) {
+                    sendAddToCartJson(false, 'Не удалось добавить блюдо: неверный id.');
                 }
                 $error = 'Не удалось добавить блюдо: неверный id.';
                 break;

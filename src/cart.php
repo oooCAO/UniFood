@@ -138,3 +138,88 @@ function clearCart(): void
 
     unset($_SESSION['cart']);
 }
+
+/**
+ * Проверяет, что запрос пришёл через JavaScript (site.js), а не обычной
+ * отправкой формы.
+ *
+ * Нужно, чтобы на добавление в корзину без ajax отвечать редиректом
+ * (как раньше), а с ajax — JSON без перезагрузки страницы.
+ *
+ * @return bool true, если в POST пришёл признак ajax=1.
+ */
+function isAjaxRequest(): bool
+{
+    return ($_POST['ajax'] ?? null) === '1';
+}
+
+/**
+ * Проверяет адрес для возврата после добавления в корзину.
+ *
+ * Адрес приходит из поля return_to на странице, а значит его можно
+ * подделать. Разрешаем только локальный путь: один ведущий слеш, без
+ * протокола и хоста (иначе получится открытый редирект на чужой сайт),
+ * без обратного слеша и переводов строк (защита от подмены заголовка
+ * Location). Если путь не прошёл проверку, возвращаем запасной адрес.
+ *
+ * @param string|null $path Значение поля return_to из формы.
+ * @param string $fallback Запасной адрес, если $path не подошёл.
+ * @return string Безопасный локальный путь.
+ */
+function getSafeReturnPath(?string $path, string $fallback = '/'): string
+{
+    if ($path === null || $path === '' || strlen($path) > 200) {
+        return $fallback;
+    }
+
+    if ($path[0] !== '/' || str_starts_with($path, '//') || str_contains($path, '\\')) {
+        return $fallback;
+    }
+
+    if (str_contains($path, "\n") || str_contains($path, "\r")) {
+        return $fallback;
+    }
+
+    if (!preg_match('/^[A-Za-z0-9\-_.~\/?=&%#]+$/', $path)) {
+        return $fallback;
+    }
+
+    // parse_url() не должен находить host или scheme — иначе это ссылка
+    // на другой сайт, а не локальный путь.
+    $parts = parse_url($path);
+    if ($parts === false || isset($parts['host']) || isset($parts['scheme'])) {
+        return $fallback;
+    }
+
+    return $path;
+}
+
+/**
+ * Отправляет JSON-ответ на ajax-добавление в корзину и завершает скрипт.
+ *
+ * @param bool $ok Успешно ли выполнено действие.
+ * @param string $message Текст для пользователя (уведомление в site.js).
+ * @param int $status HTTP-код ответа.
+ * @return void
+ */
+function sendAddToCartJson(bool $ok, string $message, int $status = 200): void
+{
+    header('Content-Type: application/json');
+    http_response_code($status);
+
+    $response = [
+        'ok' => $ok,
+        'message' => $message,
+    ];
+
+    if ($ok) {
+        $response['cartCount'] = getCartItemCount();
+    }
+
+    if ($status === 401) {
+        $response['loginUrl'] = '/login.php';
+    }
+
+    echo json_encode($response, JSON_UNESCAPED_UNICODE);
+    exit;
+}
