@@ -7,6 +7,7 @@
  */
 
 require_once __DIR__ . '/db_mysql.php';
+require_once __DIR__ . '/venues.php';
 
 /**
  * Возвращает слоты одного заведения.
@@ -83,4 +84,63 @@ function updateSlot(int $id, string $date, string $startTime, string $endTime, i
     $stmt->execute([$date, $startTime, $endTime, $capacity, $isActive ? 1 : 0, $id]);
 
     return $stmt->rowCount() > 0;
+}
+
+/**
+ * Генерирует слоты получения на один день для всех активных заведений.
+ *
+ * По решению заказчика (П.8) слоты держим только на сегодня: 09:00–17:00,
+ * шаг 15 минут (32 слота на заведение), capacity = 20. Функцию запускают
+ * вручную из админки и по cron (bin/generate_slots.php), поэтому она должна
+ * быть идемпотентной — повторный запуск на ту же дату не создаёт дублей,
+ * а просто пропускает уже существующие слоты. Этому помогает и уникальный
+ * ключ (venue_id, slot_date, start_time) в схеме, но здесь проверяем
+ * заранее через INSERT ... WHERE NOT EXISTS, чтобы вернуть понятный счётчик
+ * "создано/пропущено", а не ловить исключение дубля на каждом совпадении.
+ *
+ * @param string $date Дата генерации в формате YYYY-MM-DD.
+ * @return array{created: int, skipped: int} Сколько слотов создано и сколько
+ *   уже было (пропущено).
+ */
+function generateSlotsForDate(string $date): array
+{
+    $pdo = getMysqlConnection();
+    $venues = listVenues(true);
+
+    $insert = $pdo->prepare(
+        'INSERT INTO pickup_slots (venue_id, slot_date, start_time, end_time, capacity, is_active)
+         SELECT ?, ?, ?, ?, 20, 1
+         WHERE NOT EXISTS (
+             SELECT 1 FROM pickup_slots WHERE venue_id = ? AND slot_date = ? AND start_time = ?
+         )'
+    );
+
+    $created = 0;
+    $skipped = 0;
+
+    // Отметка времени начала дня (09:00) для посчёта времени слотов сложением секунд.
+    $dayStart = strtotime($date . ' 09:00:00');
+
+    // 480 минут (09:00–17:00) / 15 минут = 32 слота.
+    $slotsCount = 32;
+    $slotMinutes = 15;
+
+    foreach ($venues as $venue) {
+        $venueId = (int) $venue['id'];
+
+        for ($i = 0; $i < $slotsCount; $i++) {
+            $startTime = date('H:i:s', $dayStart + $i * $slotMinutes * 60);
+            $endTime = date('H:i:s', $dayStart + ($i + 1) * $slotMinutes * 60);
+
+            $insert->execute([$venueId, $date, $startTime, $endTime, $venueId, $date, $startTime]);
+
+            if ($insert->rowCount() > 0) {
+                $created++;
+            } else {
+                $skipped++;
+            }
+        }
+    }
+
+    return ['created' => $created, 'skipped' => $skipped];
 }
