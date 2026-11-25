@@ -29,7 +29,13 @@ try {
         ];
     }
 
-    $stmt = $connection->prepare('SELECT id, venue_id, name FROM categories ORDER BY venue_id, sort_order, id');
+    $stmt = $connection->prepare(
+        'SELECT c.id, c.venue_id, c.name
+         FROM categories c
+         JOIN venues v ON v.id = c.venue_id
+         WHERE v.is_active = 1
+         ORDER BY c.venue_id, c.sort_order, c.id'
+    );
     $stmt->execute();
     foreach ($stmt->fetchAll() as $row) {
         $categories[] = [
@@ -40,8 +46,14 @@ try {
     }
 
     // Недоступные блюда в каталоге не показываем: их нельзя заказать.
+    // Заведения тоже проверяем: после отключения столовой её блюда
+    // не должны оставаться в меню и на странице блюда.
     $stmt = $connection->prepare(
-        'SELECT id, venue_id, category_id, name, description, price FROM dishes WHERE is_available = 1 ORDER BY category_id, id'
+        'SELECT d.id, d.venue_id, d.category_id, d.name, d.name_ru, d.source, d.description, d.price
+         FROM dishes d
+         JOIN venues v ON v.id = d.venue_id
+         WHERE d.is_available = 1 AND v.is_active = 1
+         ORDER BY d.category_id, d.id'
     );
     $stmt->execute();
     foreach ($stmt->fetchAll() as $row) {
@@ -50,6 +62,10 @@ try {
             'venue_id' => (int) $row['venue_id'],
             'category_id' => (int) $row['category_id'],
             'name' => (string) $row['name'],
+            // Русское название заполняет администратор для блюд с сайта,
+            // у ручных блюд его нет.
+            'name_ru' => (string) ($row['name_ru'] ?? ''),
+            'source' => (string) $row['source'],
             'description' => (string) ($row['description'] ?? ''),
             'price' => (float) $row['price'],
         ];
