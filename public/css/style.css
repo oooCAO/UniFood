@@ -429,6 +429,35 @@ th {
     margin-top: auto;
 }
 
+/* Уведомления site.js (C5): прижаты к низу экрана, появление и
+   исчезание плавное, таймер 2500 мс управляется из JS. */
+.site-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 24px;
+    z-index: 1000;
+    max-width: calc(100% - 32px);
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: var(--color-accent-dark);
+    color: #ffffff;
+    font-size: 15px;
+    text-align: center;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 12px);
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.site-toast--visible {
+    opacity: 1;
+    transform: translate(-50%, 0);
+}
+
+.site-toast--error {
+    background: #8a2020;
+}
+
 /* Узкие экраны */
 
 @media (max-width: 700px) {
