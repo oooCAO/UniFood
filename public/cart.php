@@ -25,6 +25,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         switch ($action) {
             case 'add':
+                // Кнопка «В корзину» шлёт только id блюда, но POST можно
+                // подделать, поэтому проверяем, что блюдо есть в меню
+                // и сейчас доступно.
+                $dish = getOrderItemsDetails([$dishId => 1])[$dishId] ?? null;
+
+                if ($dish === null) {
+                    $error = 'Блюдо не найдено.';
+                    break;
+                }
+
+                if ((int) $dish['is_available'] !== 1) {
+                    $error = 'Блюдо сейчас недоступно.';
+                    break;
+                }
+
                 // Добавляем по одной порции: кнопка «В корзину» всегда шлёт 1.
                 if (addToCart($dishId, 1)) {
                     header('Location: /cart.php');
