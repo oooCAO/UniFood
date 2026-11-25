@@ -45,9 +45,20 @@ CREATE TABLE dishes (
     description TEXT NULL,
     price DECIMAL(10, 2) NOT NULL,
     is_available TINYINT(1) NOT NULL DEFAULT 1,
+    -- manual — блюдо завёл администратор, market — пришло из импорта меню
+    -- с market.grsu.by. Импорт никогда не трогает manual-блюда.
+    source ENUM('manual', 'market') NOT NULL DEFAULT 'manual',
+    -- Ключ блюда с внешнего сайта (хеш заведения+категории+названия), нужен
+    -- для повторного импорта: по нему находим "то же" блюдо, а не создаём
+    -- дубль. NULL у ручных блюд, уникальный ключ допускает много NULL.
+    external_key VARCHAR(191) NULL,
+    -- Русское название заполняет администратор вручную (сайт отдаёт меню
+    -- этой столовой только по-английски). Импорт его не перезаписывает.
+    name_ru VARCHAR(150) NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (venue_id) REFERENCES venues(id),
-    FOREIGN KEY (category_id) REFERENCES categories(id)
+    FOREIGN KEY (category_id) REFERENCES categories(id),
+    UNIQUE KEY uq_dishes_external_key (external_key)
 ) ENGINE=InnoDB;
 
 CREATE TABLE pickup_slots (
@@ -95,3 +106,29 @@ CREATE TABLE order_items (
 -- users.venue_id ссылается на venues, которая создана выше, но после users —
 -- добавляем ограничение здесь, а не меняем порядок создания таблиц.
 ALTER TABLE users ADD CONSTRAINT fk_users_venue FOREIGN KEY (venue_id) REFERENCES venues(id);
+
+-- Сопоставление названия столовой с market.grsu.by с нашим venue_id.
+-- source_name — ровно та строка, которую парсер достаёт из английской
+-- таблицы (summary), поэтому уникальная: на одно название — одно заведение.
+CREATE TABLE menu_sources (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    venue_id INT UNSIGNED NOT NULL,
+    source_name VARCHAR(150) NOT NULL UNIQUE,
+    -- Позволяет временно отключить источник без удаления строки сопоставления.
+    is_active TINYINT(1) NOT NULL DEFAULT 1,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (venue_id) REFERENCES venues(id)
+) ENGINE=InnoDB;
+
+-- Журнал запусков импорта меню: когда запускался, что сделал, с какой ошибкой
+-- (если была). Нужен для страницы «Импорт меню» и для отладки.
+CREATE TABLE menu_import_runs (
+    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    started_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    finished_at DATETIME NULL,
+    status ENUM('running', 'success', 'failed') NOT NULL DEFAULT 'running',
+    dishes_added INT UNSIGNED NOT NULL DEFAULT 0,
+    dishes_updated INT UNSIGNED NOT NULL DEFAULT 0,
+    dishes_hidden INT UNSIGNED NOT NULL DEFAULT 0,
+    error_text TEXT NULL
+) ENGINE=InnoDB;
