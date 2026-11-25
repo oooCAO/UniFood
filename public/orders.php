@@ -11,6 +11,7 @@
  */
 
 require_once __DIR__ . '/../src/auth.php';
+require_once __DIR__ . '/../src/order.php';
 require_once __DIR__ . '/../src/order_history.php';
 
 // История заказов есть только у вошедшего пользователя.
@@ -25,6 +26,21 @@ $order = null;
 $orders = [];
 $history = [];
 $historyError = '';
+// Отдельно от $error: ошибка отмены не должна прятать уже загруженный
+// заказ — студент должен видеть, что пошло не так, и попробовать снова.
+$actionError = '';
+$notice = '';
+
+// historyWarning в адресе — от cancelOrderByStudent()/updateOrderByStudent():
+// Mongo была недоступна, но изменение в MySQL уже сохранено, откатывать
+// его поздно (тот же принцип, что у changeOrderStatus() в src/staff_orders.php).
+$historyWarningSuffix = isset($_GET['historyWarning']) ? ', но запись истории не сохранена' : '';
+
+if (isset($_GET['cancelled'])) {
+    $notice = 'Заказ отменён' . $historyWarningSuffix . '.';
+} elseif (isset($_GET['updated'])) {
+    $notice = 'Заказ изменён' . $historyWarningSuffix . '.';
+}
 
 try {
     if ($showDetails) {
@@ -35,6 +51,30 @@ try {
             // ответа нельзя было узнать, существует ли чужой заказ.
             http_response_code(404);
         } else {
+            // Отмену обрабатываем здесь же, после того как убедились, что
+            // заказ свой: иначе чужой id можно было бы использовать, чтобы
+            // проверить существование заказа по ответу на POST.
+            if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+                if (!checkCsrfToken($_POST['csrf_token'] ?? null)) {
+                    $actionError = 'Форма устарела. Обновите страницу и попробуйте снова.';
+                } elseif (($_POST['action'] ?? '') === 'cancel') {
+                    $result = cancelOrderByStudent($userId, $orderId);
+
+                    if ($result['ok']) {
+                        $redirect = '/orders.php?id=' . $orderId . '&cancelled=1';
+
+                        if ($result['historyWarning']) {
+                            $redirect .= '&historyWarning=1';
+                        }
+
+                        header('Location: ' . $redirect);
+                        exit;
+                    }
+
+                    $actionError = $result['error'];
+                }
+            }
+
             // История запрашивается только для своего заказа и только после
             // того, как заказ найден. Сбой Mongo не должен ломать страницу:
             // статус и состав уже есть в MySQL, показываем их без истории.
@@ -54,6 +94,12 @@ try {
     http_response_code(500);
     $error = 'Не удалось загрузить заказы из-за ошибки базы данных. Попробуйте обновить страницу.';
 }
+
+$orderStatusLabels = [
+    'slot_changed' => 'Заказ изменён: время получения',
+    'items_changed' => 'Заказ изменён: состав',
+    'order_changed' => 'Заказ изменён: время и состав',
+];
 
 $pageTitle = $showDetails ? 'Заказ — UniFood' : 'Мои заказы — UniFood';
 ?>
@@ -111,6 +157,28 @@ $pageTitle = $showDetails ? 'Заказ — UniFood' : 'Мои заказы — 
             <p><strong>Итого: <?= number_format((float) $order['total_price'], 2, '.', '') ?></strong></p>
         </section>
 
+        <?php if ($notice !== ''): ?>
+            <p class="notice"><?= htmlspecialchars($notice) ?></p>
+        <?php endif; ?>
+
+        <?php if ($actionError !== ''): ?>
+            <p class="error"><?= htmlspecialchars($actionError) ?></p>
+        <?php endif; ?>
+
+        <?php if ($order['status'] === 'new'): ?>
+            <section class="card">
+                <h2 class="section-title">Действия</h2>
+                <p>
+                    <a class="btn" href="/order.php?edit=<?= (int) $order['id'] ?>">Изменить заказ</a>
+                </p>
+                <form method="post" action="/orders.php?id=<?= (int) $order['id'] ?>">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
+                    <input type="hidden" name="action" value="cancel">
+                    <button type="submit" data-confirm="Отменить заказ? Это действие нельзя отменить.">Отменить заказ</button>
+                </form>
+            </section>
+        <?php endif; ?>
+
         <section class="card">
             <h2 class="section-title">История статусов</h2>
 
@@ -129,8 +197,14 @@ $pageTitle = $showDetails ? 'Заказ — UniFood' : 'Мои заказы — 
                     <?php foreach ($history as $entry): ?>
                         <tr>
                             <td><?= htmlspecialchars($entry['changed_at']->format('d.m.Y H:i')) ?></td>
-                            <td><?= htmlspecialchars(getOrderStatusLabel($entry['old_status'])) ?></td>
-                            <td><?= htmlspecialchars(getOrderStatusLabel($entry['new_status'])) ?></td>
+                            <?php if ($entry['action'] !== null): ?>
+                                <!-- Запись об изменении слота/состава студентом (не смена статуса
+                                     сотрудником): «Было»/«Стало» тут не про что показывать. -->
+                                <td colspan="2"><?= htmlspecialchars($orderStatusLabels[$entry['action']] ?? 'Заказ изменён') ?></td>
+                            <?php else: ?>
+                                <td><?= htmlspecialchars(getOrderStatusLabel($entry['old_status'])) ?></td>
+                                <td><?= htmlspecialchars(getOrderStatusLabel($entry['new_status'])) ?></td>
+                            <?php endif; ?>
                             <td><?= htmlspecialchars($entry['changed_by_name']) ?></td>
                         </tr>
                     <?php endforeach; ?>
