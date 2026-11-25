@@ -16,8 +16,8 @@ requireRole(ROLE_ADMIN);
 $error = '';
 $venues = listVenues();
 
-// Заведение по умолчанию — первое в списке, если в адресе его не указали.
-$venueId = (int) ($_GET['venue_id'] ?? ($venues[0]['id'] ?? 0));
+// Заведение по умолчанию — первое активное, если в адресе его не указали.
+$venueId = (int) ($_GET['venue_id'] ?? getDefaultVenueId($venues));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!checkCsrfToken($_POST['csrf_token'] ?? null)) {
@@ -33,8 +33,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 if ($name === '' || $venueId <= 0) {
                     $error = 'Название обязательно.';
+                } elseif (createCategory($venueId, $name, $sortOrder) === null) {
+                    $error = 'Не удалось добавить категорию: заведение не найдено или такое название уже есть в этом заведении.';
                 } else {
-                    createCategory($venueId, $name, $sortOrder);
                     header('Location: /admin/categories.php?venue_id=' . $venueId);
                     exit;
                 }

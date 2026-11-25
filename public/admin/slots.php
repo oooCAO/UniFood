@@ -15,7 +15,7 @@ requireRole(ROLE_ADMIN);
 $error = '';
 $venues = listVenues();
 
-$venueId = (int) ($_GET['venue_id'] ?? ($venues[0]['id'] ?? 0));
+$venueId = (int) ($_GET['venue_id'] ?? getDefaultVenueId($venues));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!checkCsrfToken($_POST['csrf_token'] ?? null)) {
@@ -35,7 +35,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             switch ($action) {
                 case 'add':
-                    createSlot($venueId, $date, $startTime, $endTime, $capacity);
+                    if (createSlot($venueId, $date, $startTime, $endTime, $capacity) === null) {
+                        $error = 'Не удалось добавить слот: заведение не найдено.';
+                        break;
+                    }
+
                     header('Location: /admin/slots.php?venue_id=' . $venueId);
                     exit;
 
