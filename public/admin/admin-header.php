@@ -27,6 +27,7 @@
             <a href="/admin/users.php">Пользователи</a>
             <a href="/admin/slots.php">Слоты</a>
             <a href="/admin/statistics.php">Статистика</a>
+            <a href="/admin/menu-import.php">Импорт меню</a>
             <a href="/">На сайт</a>
             <a href="/logout.php">Выйти</a>
         </nav>
