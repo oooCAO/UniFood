@@ -12,30 +12,33 @@ require_once __DIR__ . '/../src/cart.php';
 // Счётчик нужен рядом со ссылкой на корзину, он считает порции из сессии.
 $cartCount = getCartItemCount();
 $currentRole = getCurrentUserRole();
+
+// Путь текущей страницы нужен, чтобы подсветить активный раздел в меню.
+$currentPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH);
 ?>
 <header class="site-header">
     <div class="container header-inner">
         <a class="logo" href="/">UniFood</a>
 
         <nav class="main-nav">
-            <a href="/">Заведения</a>
-            <a href="/menu.php">Меню</a>
-            <a href="/today-menu.php">Меню на сегодня</a>
-            <a href="/cart.php">Корзина <span class="cart-count"><?= (int) $cartCount ?></span></a>
+            <a href="/" class="<?= $currentPath === '/' ? 'active' : '' ?>">Заведения</a>
+            <a href="/menu.php" class="<?= in_array($currentPath, ['/menu.php', '/dish.php'], true) ? 'active' : '' ?>">Меню</a>
+            <a href="/today-menu.php" class="<?= $currentPath === '/today-menu.php' ? 'active' : '' ?>">Меню на сегодня</a>
+            <a href="/cart.php" class="<?= $currentPath === '/cart.php' ? 'active' : '' ?>">Корзина<?php if ($cartCount > 0): ?> <span class="cart-count"><?= (int) $cartCount ?></span><?php endif; ?></a>
 
             <?php if (isLoggedIn()): ?>
                 <?php if ($currentRole === ROLE_STUDENT): ?>
-                    <a href="/orders.php">Мои заказы</a>
+                    <a href="/orders.php" class="<?= $currentPath === '/orders.php' ? 'active' : '' ?>">Мои заказы</a>
                 <?php elseif ($currentRole === ROLE_STAFF): ?>
-                    <a href="/staff/orders.php">Заказы</a>
+                    <a href="/staff/orders.php" class="<?= strpos($currentPath, '/staff/') === 0 ? 'active' : '' ?>">Заказы</a>
                 <?php elseif ($currentRole === ROLE_ADMIN): ?>
-                    <a href="/admin/venues.php">Админка</a>
+                    <a href="/admin/venues.php" class="<?= strpos($currentPath, '/admin/') === 0 ? 'active' : '' ?>">Админка</a>
                 <?php endif; ?>
 
                 <a href="/logout.php">Выйти</a>
             <?php else: ?>
-                <a href="/login.php">Вход</a>
-                <a href="/register.php">Регистрация</a>
+                <a href="/login.php" class="<?= $currentPath === '/login.php' ? 'active' : '' ?>">Вход</a>
+                <a href="/register.php" class="<?= $currentPath === '/register.php' ? 'active' : '' ?>">Регистрация</a>
             <?php endif; ?>
         </nav>
     </div>

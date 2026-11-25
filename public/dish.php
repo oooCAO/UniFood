@@ -22,6 +22,7 @@ if ($catalogError !== '') {
 $dishId = (int) ($_GET['id'] ?? 0);
 $dish = null;
 $categoryName = '';
+$venueName = '';
 
 foreach ($dishes as $item) {
     if ($item['id'] === $dishId) {
@@ -37,6 +38,15 @@ if ($dish !== null) {
             break;
         }
     }
+
+    // Заведение нужно для ссылки «Вернуться в меню» — без него студент
+    // попадал бы в общий список двух столовых.
+    foreach ($venues as $item) {
+        if ($item['id'] === $dish['venue_id']) {
+            $venueName = $item['name'];
+            break;
+        }
+    }
 }
 
 if ($dish === null) {
@@ -45,7 +55,9 @@ if ($dish === null) {
     exit;
 }
 
-$pageTitle = 'Блюдо — ' . $dish['name'] . ' — UniFood';
+// У блюд с сайта администратор заполняет русское название.
+$dishName = $dish['name_ru'] !== '' ? $dish['name_ru'] : $dish['name'];
+$pageTitle = 'Блюдо — ' . $dishName . ' — UniFood';
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -59,12 +71,19 @@ $pageTitle = 'Блюдо — ' . $dish['name'] . ' — UniFood';
 <?php include __DIR__ . '/header.php'; ?>
 
 <main class="container">
-    <p><a href="/menu.php">← Вернуться в меню</a></p>
+    <p><a href="/menu.php?venue=<?= (int) $dish['venue_id'] ?>">← Вернуться в меню</a></p>
 
-    <h1 class="page-title"><?= htmlspecialchars($dish['name']) ?></h1>
+    <h1 class="page-title"><?= htmlspecialchars($dishName) ?></h1>
+
+    <?php if ($dish['source'] === 'market'): ?>
+        <p class="dish-source"><a class="badge" href="/today-menu.php">Меню на сегодня</a></p>
+    <?php endif; ?>
 
     <article class="card dish-details">
-        <p class="text-muted">Категория: <?= htmlspecialchars($categoryName) ?></p>
+        <p class="text-muted">
+            Заведение: <a href="/menu.php?venue=<?= (int) $dish['venue_id'] ?>"><?= htmlspecialchars($venueName) ?></a>
+            · Категория: <?= htmlspecialchars($categoryName) ?>
+        </p>
         <p><?= htmlspecialchars($dish['description']) ?></p>
         <p class="dish-price"><?= number_format($dish['price'], 2, ',', ' ') ?> ₽</p>
 

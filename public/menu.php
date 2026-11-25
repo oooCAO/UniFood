@@ -23,7 +23,19 @@ foreach ($venues as $item) {
     }
 }
 
+// Неизвестное или отключённое заведение — это 404, а не всё меню подряд.
+if ($venueId > 0 && $venue === null) {
+    http_response_code(404);
+    include __DIR__ . '/404.php';
+    exit;
+}
+
 $pageTitle = $venue === null ? 'Меню — UniFood' : 'Меню — ' . $venue['name'];
+
+// Без параметра venue показываем все заведения по очереди и подписываем
+// каждое: иначе категории разных столовых («Напитки», «Выпечка») шли бы
+// подряд, и было бы непонятно, откуда блюдо.
+$shownVenues = $venue !== null ? [$venue] : $venues;
 ?>
 <!DOCTYPE html>
 <html lang="ru">
@@ -49,42 +61,56 @@ $pageTitle = $venue === null ? 'Меню — UniFood' : 'Меню — ' . $venue
 
     <p class="text-muted">Цены указаны за одну порцию.</p>
 
-    <?php foreach ($categories as $category): ?>
-        <?php if ($venue !== null && $category['venue_id'] !== $venueId): ?>
-            <?php continue; ?>
+    <?php foreach ($shownVenues as $shownVenue): ?>
+        <?php if ($venue === null): ?>
+            <h2 class="venue-title"><?= htmlspecialchars($shownVenue['name']) ?></h2>
+            <p class="venue-address text-muted"><?= htmlspecialchars($shownVenue['address']) ?></p>
         <?php endif; ?>
 
-        <section class="category-block">
-            <h2 class="section-title"><?= htmlspecialchars($category['name']) ?></h2>
+        <?php foreach ($categories as $category): ?>
+            <?php if ($category['venue_id'] !== $shownVenue['id']): ?>
+                <?php continue; ?>
+            <?php endif; ?>
 
-            <div class="dish-grid">
-                <?php foreach ($dishes as $dish): ?>
-                    <?php if ($dish['category_id'] !== $category['id']): ?>
-                        <?php continue; ?>
-                    <?php endif; ?>
+            <section class="category-block">
+                <h2 class="section-title"><?= htmlspecialchars($category['name']) ?></h2>
 
-                    <?php if ($venue !== null && $dish['venue_id'] !== $venueId): ?>
-                        <?php continue; ?>
-                    <?php endif; ?>
+                <div class="dish-grid">
+                    <?php foreach ($dishes as $dish): ?>
+                        <?php if ($dish['category_id'] !== $category['id']): ?>
+                            <?php continue; ?>
+                        <?php endif; ?>
 
-                    <article class="card dish-card">
-                        <h3><?= htmlspecialchars($dish['name']) ?></h3>
-                        <p><?= htmlspecialchars($dish['description']) ?></p>
-                        <p>
-                            <span class="dish-price"><?= number_format($dish['price'], 2, ',', ' ') ?> ₽</span>
-                            <a href="/dish.php?id=<?= (int) $dish['id'] ?>">Подробнее</a>
-                        </p>
+                        <?php
+                        // У блюд с сайта администратор заполняет русское название.
+                        // Пока перевода нет, показываем название с сайта как есть.
+                        $dishName = $dish['name_ru'] !== '' ? $dish['name_ru'] : $dish['name'];
+                        ?>
 
-                        <form method="post" action="/cart.php">
-                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
-                            <input type="hidden" name="action" value="add">
-                            <input type="hidden" name="dish_id" value="<?= (int) $dish['id'] ?>">
-                            <button class="btn btn-primary" type="submit">В корзину</button>
-                        </form>
-                    </article>
-                <?php endforeach; ?>
-            </div>
-        </section>
+                        <article class="card dish-card">
+                            <h3><?= htmlspecialchars($dishName) ?></h3>
+
+                            <?php if ($dish['source'] === 'market'): ?>
+                                <p class="dish-source"><a class="badge" href="/today-menu.php">Меню на сегодня</a></p>
+                            <?php endif; ?>
+
+                            <p><?= htmlspecialchars($dish['description']) ?></p>
+                            <p>
+                                <span class="dish-price"><?= number_format($dish['price'], 2, ',', ' ') ?> ₽</span>
+                                <a href="/dish.php?id=<?= (int) $dish['id'] ?>">Подробнее</a>
+                            </p>
+
+                            <form method="post" action="/cart.php">
+                                <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
+                                <input type="hidden" name="action" value="add">
+                                <input type="hidden" name="dish_id" value="<?= (int) $dish['id'] ?>">
+                                <button class="btn btn-primary" type="submit">В корзину</button>
+                            </form>
+                        </article>
+                    <?php endforeach; ?>
+                </div>
+            </section>
+        <?php endforeach; ?>
     <?php endforeach; ?>
 </main>
 
