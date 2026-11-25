@@ -12,6 +12,7 @@
 
 require_once __DIR__ . '/../src/auth.php';
 require_once __DIR__ . '/../src/order_history.php';
+require_once __DIR__ . '/../src/format.php';
 
 // История заказов есть только у вошедшего пользователя.
 requireLogin();
@@ -102,13 +103,13 @@ $pageTitle = $showDetails ? 'Заказ — UniFood' : 'Мои заказы — 
                     <tr>
                         <td><?= htmlspecialchars($item['name']) ?></td>
                         <td><?= (int) $item['quantity'] ?></td>
-                        <td><?= number_format((float) $item['price'], 2, '.', '') ?></td>
-                        <td><?= number_format((float) $item['price'] * (int) $item['quantity'], 2, '.', '') ?></td>
+                        <td><?= formatPrice((float) $item['price']) ?></td>
+                        <td><?= formatPrice((float) $item['price'] * (int) $item['quantity']) ?></td>
                     </tr>
                 <?php endforeach; ?>
             </table>
 
-            <p><strong>Итого: <?= number_format((float) $order['total_price'], 2, '.', '') ?></strong></p>
+            <p><strong>Итого: <?= formatPrice((float) $order['total_price']) ?></strong></p>
         </section>
 
         <section class="card">
@@ -180,7 +181,7 @@ $pageTitle = $showDetails ? 'Заказ — UniFood' : 'Мои заказы — 
                         echo htmlspecialchars(implode(', ', $parts));
                         ?>
                     </td>
-                    <td><?= number_format((float) $item['total_price'], 2, '.', '') ?></td>
+                    <td><?= formatPrice((float) $item['total_price']) ?></td>
                     <td><a href="/orders.php?id=<?= (int) $item['id'] ?>">Посмотреть</a></td>
                 </tr>
             <?php endforeach; ?>
