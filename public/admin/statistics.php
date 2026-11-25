@@ -10,6 +10,8 @@
 require_once __DIR__ . '/../../src/auth.php';
 require_once __DIR__ . '/../../src/venues.php';
 require_once __DIR__ . '/../../src/statistics.php';
+// formatPrice() — единый формат цен в BYN для всего сайта (П.5).
+require_once __DIR__ . '/../../src/format.php';
 
 requireRole(ROLE_ADMIN);
 
@@ -70,7 +72,7 @@ include __DIR__ . '/admin-header.php';
 
     <ul class="admin-list admin-stats-summary">
         <li>Заказов: <?= (int) $orderStats['orders_count'] ?></li>
-        <li>Выручка: <?= number_format($orderStats['revenue'], 2, '.', '') ?></li>
+        <li>Выручка: <?= formatPrice((float) $orderStats['revenue']) ?></li>
         <li>
             Среднее время от оформления до выдачи:
             <?= $averageMinutes !== null ? number_format($averageMinutes, 1, '.', '') . ' мин.' : 'нет данных' ?>

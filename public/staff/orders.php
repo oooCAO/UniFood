@@ -12,6 +12,8 @@ require_once __DIR__ . '/../../src/staff_orders.php';
 // getOrderStatusLabel()/getOrderStatusLabels() — русские подписи статусов,
 // уже написаны Разработчиком 1 для страницы студента, дублировать их не нужно.
 require_once __DIR__ . '/../../src/order_history.php';
+// formatPrice() — единый формат цен в BYN для всего сайта (П.5).
+require_once __DIR__ . '/../../src/format.php';
 
 requireRole(ROLE_STAFF);
 
@@ -121,12 +123,12 @@ $pageTitle = $showDetails ? 'Заказ — UniFood' : 'Заказы — UniFood
                     <tr>
                         <td><?= htmlspecialchars($item['name']) ?></td>
                         <td><?= (int) $item['quantity'] ?></td>
-                        <td><?= number_format((float) $item['price'], 2, '.', '') ?></td>
+                        <td><?= formatPrice((float) $item['price']) ?></td>
                     </tr>
                 <?php endforeach; ?>
             </table>
 
-            <p><strong>Итого: <?= number_format((float) $order['total_price'], 2, '.', '') ?></strong></p>
+            <p><strong>Итого: <?= formatPrice((float) $order['total_price']) ?></strong></p>
 
             <?php $nextStatuses = $transitions[$order['status']] ?? []; ?>
             <?php if (!empty($nextStatuses)): ?>
@@ -183,7 +185,7 @@ $pageTitle = $showDetails ? 'Заказ — UniFood' : 'Заказы — UniFood
                             <?= htmlspecialchars(substr($item['start_time'], 0, 5)) ?>–<?= htmlspecialchars(substr($item['end_time'], 0, 5)) ?>
                         </td>
                         <td><?= htmlspecialchars(getOrderStatusLabel($item['status'])) ?></td>
-                        <td><?= number_format((float) $item['total_price'], 2, '.', '') ?></td>
+                        <td><?= formatPrice((float) $item['total_price']) ?></td>
                         <td><a href="/staff/orders.php?id=<?= (int) $item['id'] ?>">Открыть</a></td>
                     </tr>
                 <?php endforeach; ?>
