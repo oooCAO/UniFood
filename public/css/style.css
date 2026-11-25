@@ -28,7 +28,16 @@ body {
     font-size: 16px;
     line-height: 1.5;
     color: var(--color-text);
-    background: var(--color-bg);
+    background-color: var(--color-bg);
+    /* Лёгкий узор из точек в цвет акцента: фон не выглядит пустым,
+       но не спорит с текстом и карточками. */
+    background-image: radial-gradient(rgba(47, 125, 79, 0.09) 1px, transparent 1px);
+    background-size: 20px 20px;
+
+    /* Подвал прижимается к низу окна, даже если страница короткая. */
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
 }
 
 a {
@@ -78,6 +87,12 @@ a:hover {
     text-decoration: none;
 }
 
+/* Текущий раздел подсвечиваем, чтобы было видно, где находится студент. */
+.main-nav a.active {
+    color: var(--color-accent-dark);
+    font-weight: bold;
+}
+
 .cart-count {
     display: inline-block;
     min-width: 22px;
@@ -89,10 +104,29 @@ a:hover {
     text-align: center;
 }
 
+/* Пометка «Меню на сегодня» у блюд, импортированных с сайта. */
+.badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    background: #e3f0e7;
+    color: var(--color-accent-dark);
+    font-size: 12px;
+    font-weight: bold;
+    text-decoration: none;
+}
+
+.badge:hover {
+    background: #d3e8da;
+}
+
 /* Основное содержимое */
 
 main {
     padding: 32px 0 48px;
+
+    /* Занимает всё свободное место, поэтому подвал остаётся внизу. */
+    flex: 1 0 auto;
 }
 
 .page-title {
@@ -103,6 +137,22 @@ main {
 .section-title {
     margin: 0 0 16px;
     font-size: 22px;
+}
+
+/* Заголовок заведения на общей странице меню: категории разных столовых
+   не должны идти одним списком без подписи. */
+.venue-title {
+    margin: 28px 0 4px;
+    font-size: 22px;
+    color: var(--color-accent-dark);
+}
+
+.venue-address {
+    margin: 0 0 16px;
+}
+
+.dish-source {
+    margin: 0 0 8px;
 }
 
 .text-muted {
@@ -396,6 +446,9 @@ th {
     background: var(--color-card);
     color: var(--color-muted);
     font-size: 14px;
+
+    /* Дополнительная страховка на случай, если main закончился раньше окна. */
+    margin-top: auto;
 }
 
 /* Узкие экраны */
