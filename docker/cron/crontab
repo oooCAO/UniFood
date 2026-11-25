@@ -1,4 +1,22 @@
+# Файлы в /etc/cron.d получают своё, пустое окружение и собственный
+# дефолтный PATH (/usr/bin:/bin) — заголовок /etc/crontab с PATH сюда не
+# распространяется. В php:8.3-cli бинарник лежит в /usr/local/bin, поэтому
+# без строки ниже задания падают с "php: not found".
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+# Переменные DB_*/MONGO_* из environment: сервиса cron (docker-compose.yml)
+# видит только сам демон cron (PID 1), а не задания, которые он запускает по
+# расписанию — для них cron строит отдельное окружение без них. Файл
+# /etc/cron.d/unifood-env создаёт команда сервиса cron при старте контейнера
+# из своего реального окружения; ". ... &&" подключает его перед php, иначе
+# src/config.php видит пустые DB_USER/DB_PASSWORD и подключение к MySQL
+# отклоняется с "Access denied".
+
 # Ежедневный импорт меню market.grsu.by в каталог UniFood.
 # Контейнер работает по Europe/Minsk (см. Dockerfile), поэтому время локальное.
 # Вывод перенаправляем в stdout контейнера: docker compose logs cron.
-0 7 * * * root php /var/www/html/bin/import_menu.php >> /proc/1/fd/1 2>&1
+0 7 * * * root . /etc/cron.d/unifood-env && php /var/www/html/bin/import_menu.php >> /proc/1/fd/1 2>&1
+
+# Ежедневная генерация слотов на сегодня: 09:00–17:00, шаг 15 минут.
+# Вывод идёт в лог контейнера: docker compose logs cron.
+5 0 * * * root . /etc/cron.d/unifood-env && php /var/www/html/bin/generate_slots.php >> /proc/1/fd/1 2>&1
