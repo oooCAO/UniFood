@@ -21,10 +21,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $action = $_POST['action'] ?? '';
         $dishId = (int) ($_POST['dish_id'] ?? 0);
-        $quantity = (int) ($_POST['quantity'] ?? 1);
+
+        // Количество проверяем строкой до приведения к int: иначе «abc»
+        // превратился бы в 0 и позиция молча удалилась бы.
+        $rawQuantity = trim((string) ($_POST['quantity'] ?? ''));
 
         switch ($action) {
             case 'add':
+                // Кнопка «В корзину» шлёт только id блюда, но POST можно
+                // подделать, поэтому проверяем, что блюдо есть в меню
+                // и сейчас доступно.
+                $dish = getOrderItemsDetails([$dishId => 1])[$dishId] ?? null;
+
+                if ($dish === null) {
+                    $error = 'Блюдо не найдено.';
+                    break;
+                }
+
+                if ((int) $dish['is_available'] !== 1) {
+                    $error = 'Блюдо сейчас недоступно.';
+                    break;
+                }
+
                 // Добавляем по одной порции: кнопка «В корзину» всегда шлёт 1.
                 if (addToCart($dishId, 1)) {
                     header('Location: /cart.php');
@@ -34,7 +52,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 break;
 
             case 'update':
-                if (updateCartQuantity($dishId, $quantity)) {
+                // Разрешаем только целое неотрицательное число: 0 удаляет
+                // позицию (так и задумано), отрицательные и текст — ошибка.
+                if (!preg_match('/^\d+$/', $rawQuantity)) {
+                    $error = 'Некорректное количество.';
+                    break;
+                }
+
+                if (updateCartQuantity($dishId, (int) $rawQuantity)) {
                     header('Location: /cart.php');
                     exit;
                 }

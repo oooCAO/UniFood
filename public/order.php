@@ -100,6 +100,17 @@ if ($selectedVenueId === 0 && count($cartVenueIds) === 1) {
     $selectedVenueId = (int) array_key_first($cartVenueIds);
 }
 
+// Слоты других заведений не показываем: блюда корзины должны быть из
+// выбранного заведения, иначе createOrder() откажет.
+$venueSlots = [];
+
+foreach ($slots as $slot) {
+    if ((int) $slot['venue_id'] === $selectedVenueId) {
+        $venueSlots[] = $slot;
+    }
+}
+
+$hasSlots = !empty($venueSlots);
 $canSubmitOrder = !empty($cart) && !$cartHasUnavailable && !$cartHasMixedVenues;
 ?>
 <!DOCTYPE html>
@@ -213,7 +224,11 @@ $canSubmitOrder = !empty($cart) && !$cartHasUnavailable && !$cartHasMixedVenues;
             <p>В корзине есть недоступные блюда. Удалите их в корзине, чтобы оформить заказ.</p>
         <?php endif; ?>
 
-        <?php if ($canSubmitOrder): ?>
+        <?php if ($canSubmitOrder && !$hasSlots): ?>
+            <p>Нет доступного времени получения для этого заведения.</p>
+        <?php endif; ?>
+
+        <?php if ($canSubmitOrder && $hasSlots): ?>
         <form method="post" action="/order.php">
             <input type="hidden" name="csrf_token" value="<?= htmlspecialchars(getCsrfToken()) ?>">
 
@@ -235,11 +250,11 @@ $canSubmitOrder = !empty($cart) && !$cartHasUnavailable && !$cartHasMixedVenues;
                     <option value="">— выберите время —</option>
                     <?php
                     // Слоты группируем по заведению, чтобы было видно, к какому
-                    // месту получения относится время. Совпадение заведения
-                    // и слота всё равно проверит createOrder().
+                    // месту получения относится время. Здесь остаются только
+                    // слоты выбранного заведения, но группа сохраняет подпись.
                     $slotsByVenue = [];
 
-                    foreach ($slots as $slot) {
+                    foreach ($venueSlots as $slot) {
                         $slotsByVenue[$slot['venue_name']][] = $slot;
                     }
                     ?>
