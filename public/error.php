@@ -28,9 +28,12 @@ $errorMessage = $errorMessage ?? 'Что-то пошло не так. Попро
 <?php include __DIR__ . '/header.php'; ?>
 
 <main class="container">
-    <h1 class="page-title">Ошибка</h1>
-    <p class="error"><?= htmlspecialchars($errorMessage) ?></p>
-    <p><a class="btn" href="/">На главную</a></p>
+    <section class="card empty-state empty-state--error">
+        <p class="empty-code">500</p>
+        <h1 class="page-title">Ошибка</h1>
+        <p class="error"><?= htmlspecialchars($errorMessage) ?></p>
+        <p><a class="btn btn-primary" href="/">На главную</a></p>
+    </section>
 </main>
 
 <?php include __DIR__ . '/footer.php'; ?>
