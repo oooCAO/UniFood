@@ -1,37 +1,68 @@
 /*
  * Общие стили UniFood.
  *
- * Один файл на все страницы: шапка, подвал, карточки каталога,
- * формы и таблицы. Стили намеренно простые, их легко читать и править.
+ * Один файл на все страницы сайта: шапка, подвал, каталог, корзина,
+ * оформление заказа, история заказов и формы входа.
+ * Стили намеренно простые по структуре: токены сверху, дальше блоки
+ * страниц. Никаких фреймворков и сборки — файл подключается напрямую.
  */
 
+/* ------------------------------------------------------------------ */
+/* Токены оформления                                                   */
+/* ------------------------------------------------------------------ */
+
 :root {
-    --color-bg: #f7f7f5;
-    --color-card: #ffffff;
-    /* Карточки заведений на главной: чуть темнее фона страницы, чтобы
-       блоки читались, но не отвлекали от содержимого. */
-    --color-card-soft: #eeeee8;
-    --color-text: #222222;
-    --color-muted: #666666;
-    --color-border: #dcdcd6;
+    /* Тёплая «кампусная» палитра: кремовый фон и спокойный зелёный.
+       Акцент один, чтобы интерфейс не выглядел пёстрым. */
+    --color-bg: #f7f3ea;
+    --color-card: #fffdf8;
+    --color-card-soft: #f1eadb;
+    --color-text: #24261f;
+    --color-muted: #63655a;
+    --color-border: #e3dccd;
     --color-accent: #2f7d4f;
-    --color-accent-dark: #245f3c;
+    --color-accent-dark: #1f5b39;
+    --color-accent-soft: #e6f0e8;
+    --color-gold: #b9822f;
+    --color-danger: #a33a3a;
+
+    /* Мягкие тени вместо жирных рамок: карточки «лежат» на фоне. */
+    --shadow-sm: 0 1px 2px rgba(36, 38, 31, 0.05), 0 6px 18px rgba(36, 38, 31, 0.05);
+    --shadow-md: 0 12px 32px rgba(36, 38, 31, 0.11);
+
+    --radius-sm: 10px;
+    --radius: 16px;
+    --radius-lg: 26px;
+
+    /* Заголовки набираем антиквой — она даёт «кафешное» настроение,
+       а основной текст остаётся системным шрифтом и быстро читается. */
+    --font-body: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    --font-display: Georgia, "Times New Roman", serif;
 }
 
-* {
+/* ------------------------------------------------------------------ */
+/* База                                                                */
+/* ------------------------------------------------------------------ */
+
+*,
+*::before,
+*::after {
     box-sizing: border-box;
+}
+
+html {
+    scroll-behavior: smooth;
 }
 
 body {
     margin: 0;
-    font-family: Arial, "Helvetica Neue", sans-serif;
+    font-family: var(--font-body);
     font-size: 16px;
-    line-height: 1.5;
+    line-height: 1.55;
     color: var(--color-text);
-    background-color: #f3f5ef;
-
-    /* Узор из силуэтов еды (пицца, напиток, яблоко, бургер) повторяется
-       по всей странице: фон не пустой, но не мешает читать текст. */
+    background-color: var(--color-bg);
+    /* Узор из силуэтов еды повторяется по всей странице: фон не пустой,
+       но не мешает читать текст и карточки. */
     background-image: url("/css/food-pattern.svg");
     background-size: 200px 200px;
 
@@ -41,100 +72,251 @@ body {
     min-height: 100vh;
 }
 
+::selection {
+    background: #cfe6d8;
+}
+
 a {
     color: var(--color-accent-dark);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
 }
 
 a:hover {
     color: var(--color-accent);
 }
 
-.container {
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 20px;
-
-    /* В flex-колонке body авто-отступы отменяют растягивание по ширине,
-       и страница сжимается в одну колонку. Ширина 100% возвращает сетку. */
-    width: 100%;
+img {
+    max-width: 100%;
+    height: auto;
 }
 
-/* Шапка и навигация */
+h1,
+h2,
+h3,
+h4 {
+    line-height: 1.2;
+}
+
+:focus-visible {
+    outline: 3px solid rgba(47, 125, 79, 0.35);
+    outline-offset: 2px;
+}
+
+[hidden] {
+    display: none !important;
+}
+
+.container {
+    width: 100%;
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Шапка и навигация                                                   */
+/* ------------------------------------------------------------------ */
 
 .site-header {
-    background: var(--color-card);
-    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255, 253, 248, 0.92);
+    border-bottom: 1px solid transparent;
+    /* Полупрозрачный фон с размытием: контент под шапкой не мешает читать
+       меню, но шапка остаётся частью страницы. */
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Тень появляется только после прокрутки, чтобы в начале страницы
+   шапка не выглядела тяжёлой. Класс ставит site.js. */
+.site-header.is-scrolled {
+    border-bottom-color: var(--color-border);
+    box-shadow: 0 10px 30px rgba(36, 38, 31, 0.07);
 }
 
 .header-inner {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 20px;
-    min-height: 64px;
+    gap: 24px;
+    min-height: 70px;
 }
 
 .logo {
-    font-size: 24px;
-    font-weight: bold;
-    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
     color: var(--color-accent-dark);
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-decoration: none;
+    white-space: nowrap;
+}
+
+.logo:hover {
+    color: var(--color-accent);
+    text-decoration: none;
+}
+
+.logo-mark {
+    display: grid;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3a8d5c, var(--color-accent));
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(47, 125, 79, 0.24);
+}
+
+.logo-mark svg {
+    width: 22px;
+    height: 22px;
 }
 
 .main-nav {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 16px;
+    gap: 2px;
 }
 
 .main-nav a {
+    padding: 8px 12px;
+    border-radius: 999px;
+    color: var(--color-text);
+    font-size: 15px;
+    text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+
+.main-nav a:hover {
+    background: var(--color-accent-soft);
+    color: var(--color-accent-dark);
     text-decoration: none;
 }
 
 /* Текущий раздел подсвечиваем, чтобы было видно, где находится студент. */
 .main-nav a.active {
+    background: var(--color-accent-soft);
     color: var(--color-accent-dark);
-    font-weight: bold;
+    font-weight: 600;
+}
+
+.cart-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .cart-count {
     display: inline-block;
     min-width: 22px;
-    padding: 1px 6px;
-    border-radius: 11px;
+    padding: 1px 7px;
+    border-radius: 999px;
     background: var(--color-accent);
     color: #ffffff;
-    font-size: 13px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1.6;
     text-align: center;
 }
 
-/* Счётчик всегда в разметке (нужно site.js), при нуле порций скрываем
-   атрибутом hidden, а не удалением из DOM. */
-.cart-count[hidden] {
-    display: none;
+/* Счётчик обновляет site.js: анимация только у текста, элемент
+   не пересоздаётся, поэтому шапка не «дёргается». */
+.cart-count--bump {
+    animation: count-bump 0.35s ease;
 }
 
-/* Пометка «Меню на сегодня» у блюд, импортированных с сайта. */
-.badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 10px;
-    background: #e3f0e7;
+@keyframes count-bump {
+    50% {
+        transform: scale(1.25);
+    }
+}
+
+/* Ссылки ролей и авторизации: небольшие визуальные акценты,
+   логика ссылок не меняется. */
+.main-nav a.nav-role {
     color: var(--color-accent-dark);
-    font-size: 12px;
-    font-weight: bold;
-    text-decoration: none;
 }
 
-.badge:hover {
-    background: #d3e8da;
+/* Небольшая точка перед ссылкой роли: взгляд быстрее находит
+   «Мои заказы» / «Заказы» / «Админку» среди остальных пунктов. */
+.main-nav a.nav-role::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: var(--color-gold);
+    vertical-align: 1px;
 }
 
-/* Основное содержимое */
+.main-nav a.nav-register {
+    background: var(--color-accent);
+    color: #ffffff;
+}
+
+.main-nav a.nav-register:hover {
+    background: var(--color-accent-dark);
+    color: #ffffff;
+}
+
+.main-nav a.nav-logout {
+    color: var(--color-muted);
+}
+
+/* Кнопка мобильного меню. Без JS у неё атрибут hidden, а ссылки
+   показываются обычным переносом — навигация остаётся доступной. */
+.nav-toggle {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-card);
+    cursor: pointer;
+}
+
+.nav-toggle-line {
+    width: 18px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--color-accent-dark);
+    transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.site-header.nav-open .nav-toggle-line:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+
+.site-header.nav-open .nav-toggle-line:nth-child(2) {
+    opacity: 0;
+}
+
+.site-header.nav-open .nav-toggle-line:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+
+/* ------------------------------------------------------------------ */
+/* Основное содержимое                                                 */
+/* ------------------------------------------------------------------ */
 
 main {
-    padding: 32px 0 48px;
+    padding: 36px 0 64px;
 
     /* Занимает всё свободное место, поэтому подвал остаётся внизу. */
     flex: 1 0 auto;
@@ -142,73 +324,198 @@ main {
 
 .page-title {
     margin: 0 0 12px;
-    font-size: 28px;
+    font-family: var(--font-display);
+    font-size: 32px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
 }
 
 .section-title {
     margin: 0 0 16px;
-    font-size: 22px;
-}
-
-/* Заголовок заведения на общей странице меню: категории разных столовых
-   не должны идти одним списком без подписи. */
-.venue-title {
-    margin: 28px 0 4px;
-    font-size: 22px;
-    color: var(--color-accent-dark);
-}
-
-.venue-address {
-    margin: 0 0 16px;
-}
-
-.dish-source {
-    margin: 0 0 8px;
-}
-
-/* Картинка и текст меню заведения (П.3): картинка не шире блока,
-   текст рядом ограничен по ширине для удобного чтения. На мобильном
-   складываются в одну колонку (правило ниже, в медиа-запросе). */
-.venue-menu {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    gap: 20px;
-    margin: 4px 0 28px;
-}
-
-.venue-menu-image {
-    display: block;
-    flex: 0 1 320px;
-    max-width: 100%;
-    height: auto;
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    background: var(--color-card);
-}
-
-.venue-menu-text {
-    flex: 1 1 320px;
-    max-width: 480px;
-    margin: 0;
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
 }
 
 .text-muted {
     color: var(--color-muted);
 }
 
-.venue-grid,
-.dish-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 20px;
+/* Ссылка «назад» на страницах блюда и меню. */
+.back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 18px;
+    color: var(--color-muted);
+    font-size: 14px;
+    text-decoration: none;
 }
 
-.card {
-    padding: 18px;
+.back-link:hover {
+    color: var(--color-accent-dark);
+    text-decoration: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Главная: hero и заведения                                          */
+/* ------------------------------------------------------------------ */
+
+.hero {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    align-items: center;
+    gap: 40px;
+    margin: 4px 0 56px;
+    padding: clamp(28px, 5vw, 56px);
+    overflow: hidden;
     border: 1px solid var(--color-border);
-    border-radius: 8px;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(135deg, #fffdf8 0%, #f2ecdd 58%, #e7f0e8 100%);
+    box-shadow: var(--shadow-sm);
+}
+
+/* Большой мягкий круг на фоне: глубина без лишних картинок. */
+.hero::after {
+    content: "";
+    position: absolute;
+    right: -120px;
+    bottom: -160px;
+    width: 420px;
+    height: 420px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(47, 125, 79, 0.12), transparent 68%);
+    pointer-events: none;
+}
+
+.hero-copy {
+    position: relative;
+    z-index: 1;
+}
+
+.hero-eyebrow {
+    margin: 0 0 14px;
+    color: var(--color-accent);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+}
+
+.hero-title {
+    margin: 0 0 18px;
+    font-family: var(--font-display);
+    font-size: clamp(32px, 4.6vw, 52px);
+    font-weight: 700;
+    line-height: 1.06;
+    letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+    max-width: 52ch;
+    margin: 0 0 26px;
+    color: var(--color-muted);
+    font-size: 17px;
+}
+
+.hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.hero-art {
+    position: relative;
+    z-index: 1;
+    display: grid;
+    place-items: center;
+    min-height: 260px;
+}
+
+.hero-plate {
+    display: grid;
+    place-items: center;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #ffffff, #e8dfcd 72%);
+    box-shadow: inset 0 -10px 24px rgba(36, 38, 31, 0.08), 0 20px 44px rgba(36, 38, 31, 0.14);
+}
+
+.hero-bowl {
+    width: 112px;
+    height: 112px;
+    color: var(--color-accent-dark);
+}
+
+.hero-chip {
+    position: absolute;
+    padding: 8px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
     background: var(--color-card);
+    box-shadow: var(--shadow-sm);
+    color: var(--color-accent-dark);
+    font-size: 13px;
+    font-weight: 600;
+    animation: float 5s ease-in-out infinite;
+}
+
+.hero-chip--one {
+    top: 6%;
+    left: 0;
+}
+
+.hero-chip--two {
+    right: 0;
+    bottom: 16%;
+    animation-delay: -1.6s;
+}
+
+.hero-chip--three {
+    bottom: 0;
+    left: 8%;
+    animation-delay: -3.2s;
+}
+
+@keyframes float {
+    50% {
+        transform: translateY(-8px);
+    }
+}
+
+.venues-section {
+    /* Якорь из hero не должен прятаться под липкой шапкой. */
+    scroll-margin-top: 92px;
+}
+
+.section-head {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.section-head .section-title {
+    margin-bottom: 4px;
+}
+
+.section-head p {
+    margin: 0;
+}
+
+/* ------------------------------------------------------------------ */
+/* Карточки                                                            */
+/* ------------------------------------------------------------------ */
+
+.card {
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-card);
+    box-shadow: var(--shadow-sm);
 }
 
 .card h3 {
@@ -220,16 +527,29 @@ main {
     margin: 0 0 12px;
 }
 
-/* На главной карточки заведений одного вида: фон темнее страницы,
-   кнопка прижата к низу, поэтому карточки в ряду выглядят ровно.
-   position: relative нужен, чтобы оверлей кнопки (.btn::after) растянулся
-   именно на эту карточку, а не на весь документ. */
+.venue-grid,
+.dish-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+    gap: 22px;
+}
+
+/* Карточка заведения кликабельна целиком: кнопка растягивается
+   прозрачным слоем на всю карточку (договорённость C7). Вложенных
+   ссылок и JS для этого не нужно. */
 .venue-grid .card {
     position: relative;
     display: flex;
     flex-direction: column;
     gap: 4px;
-    background: var(--color-card-soft);
+    padding: 24px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.venue-grid .card:hover {
+    transform: translateY(-3px);
+    border-color: #cfe0d4;
+    box-shadow: var(--shadow-md);
 }
 
 .venue-grid .card .btn {
@@ -237,73 +557,344 @@ main {
     align-self: flex-start;
 }
 
-/* Кликабельная карточка целиком без вложенных ссылок и JS: прозрачный
-   псевдоэлемент кнопки растягивается на всю карточку (inset: 0),
-   сама кнопка остаётся на месте и видна поверх текста. */
 .venue-grid .card .btn::after {
     content: "";
     position: absolute;
     inset: 0;
+    /* Скругление как у карточки, а не у кнопки: иначе кликабельной
+       была бы только «пилюля» кнопки, а не вся карточка. */
+    border-radius: var(--radius);
+}
+
+.venue-mark {
+    display: grid;
+    place-items: center;
+    width: 46px;
+    height: 46px;
+    margin-bottom: 14px;
+    border-radius: 14px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent-dark);
+}
+
+.venue-mark svg {
+    width: 24px;
+    height: 24px;
+}
+
+.venue-card h3 {
+    margin-bottom: 6px;
+    font-size: 21px;
+}
+
+.venue-card-address {
+    margin-bottom: 20px;
+    color: var(--color-muted);
+    font-size: 14.5px;
 }
 
 .venue-grid .card p:last-of-type {
     margin-bottom: 16px;
 }
 
-.category-block {
-    margin-bottom: 32px;
+/* ------------------------------------------------------------------ */
+/* Меню заведения и карточки блюд                                      */
+/* ------------------------------------------------------------------ */
+
+.venue-head {
+    margin: 0 0 28px;
+    padding-bottom: 20px;
+    border-bottom: 1px dashed var(--color-border);
 }
 
-.dish-price {
-    margin-right: 12px;
-    font-weight: bold;
+.venue-eyebrow {
+    margin: 0 0 8px;
+    color: var(--color-accent);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.venue-head .page-title {
+    margin-bottom: 6px;
+}
+
+.venue-address {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+    color: var(--color-muted);
+}
+
+.venue-address::before {
+    content: "";
+    flex: 0 0 auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--color-accent);
+}
+
+/* Картинка и текст меню заведения (П.3): картинка не шире блока,
+   текст рядом ограничен по ширине для удобного чтения. */
+.venue-menu {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 22px;
+    margin: 4px 0 28px;
+}
+
+.venue-menu-image {
+    display: block;
+    flex: 0 1 340px;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: #ffffff;
+    box-shadow: var(--shadow-sm);
+}
+
+.venue-menu-text {
+    flex: 1 1 320px;
+    max-width: 480px;
+    margin: 0;
+    color: var(--color-muted);
+    line-height: 1.65;
+}
+
+/* Заголовок заведения на общей странице меню: категории разных столовых
+   не должны идти одним списком без подписи. */
+.venue-title {
+    margin: 32px 0 4px;
+    font-family: var(--font-display);
+    font-size: 24px;
     color: var(--color-accent-dark);
+}
+
+.category-block {
+    margin-bottom: 40px;
+}
+
+.category-block .section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 21px;
+}
+
+.category-block .section-title::before {
+    content: "";
+    width: 4px;
+    height: 22px;
+    border-radius: 2px;
+    background: var(--color-accent);
+}
+
+.dish-card {
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.dish-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+}
+
+.dish-card h3 {
+    margin-bottom: 10px;
+    font-size: 18px;
+}
+
+.dish-card p {
+    color: var(--color-muted);
+    font-size: 14.5px;
+}
+
+/* Описание блюда ограничиваем тремя строками: карточки в ряду
+   остаются одной высоты, кнопки не «прыгают». */
+.dish-card h3 + p {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+}
+
+.dish-card p:last-of-type {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 14px;
 }
 
 .dish-card form {
+    margin: auto 0 0;
+}
+
+/* В каталоге много карточек, поэтому кнопка добавления в корзину
+   спокойная: заливка появляется при наведении, а не у всех сразу.
+   На странице блюда кнопка остаётся основной зелёной. */
+.dish-card form .btn {
+    width: 100%;
+    border-color: transparent;
+    background: var(--color-accent-soft);
+    color: var(--color-accent-dark);
+    box-shadow: none;
+}
+
+.dish-card form .btn:hover {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    color: #ffffff;
+    box-shadow: 0 6px 14px rgba(47, 125, 79, 0.22);
+}
+
+.dish-price {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent-dark);
+    font-weight: 700;
+}
+
+/* ------------------------------------------------------------------ */
+/* Страница блюда                                                      */
+/* ------------------------------------------------------------------ */
+
+.dish-details {
+    max-width: 720px;
+    padding: 28px;
+}
+
+.dish-meta {
+    margin-bottom: 16px;
+    font-size: 14.5px;
+}
+
+.dish-description {
+    margin-bottom: 20px;
+    font-size: 16px;
+}
+
+.dish-details .dish-price {
+    margin-bottom: 22px;
+    padding: 6px 14px;
+    font-size: 22px;
+}
+
+.dish-details form {
     margin: 0;
 }
 
-.dish-details {
-    max-width: 640px;
+.dish-details form .btn {
+    min-width: 200px;
 }
 
-/* Кнопки и формы */
+/* ------------------------------------------------------------------ */
+/* Кнопки                                                              */
+/* ------------------------------------------------------------------ */
 
 .btn {
-    display: inline-block;
-    padding: 9px 16px;
-    border: 1px solid var(--color-accent-dark);
-    border-radius: 6px;
-    background: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-card);
     color: var(--color-accent-dark);
+    font-family: var(--font-body);
     font-size: 15px;
+    font-weight: 600;
+    line-height: 1.2;
     text-decoration: none;
     cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
 .btn:hover {
-    background: #eef5f0;
+    transform: translateY(-1px);
+    border-color: #c9dfd0;
+    background: var(--color-accent-soft);
+    color: var(--color-accent-dark);
+    text-decoration: none;
+}
+
+.btn:active {
+    transform: translateY(0);
 }
 
 .btn-primary {
     border-color: var(--color-accent);
     background: var(--color-accent);
     color: #ffffff;
+    box-shadow: 0 6px 14px rgba(47, 125, 79, 0.22);
 }
 
 .btn-primary:hover {
+    border-color: var(--color-accent-dark);
     background: var(--color-accent-dark);
+    color: #ffffff;
+    box-shadow: 0 8px 18px rgba(47, 125, 79, 0.28);
 }
 
+.btn-lg {
+    padding: 13px 24px;
+    font-size: 16px;
+}
+
+.btn:disabled,
+button:disabled {
+    opacity: 0.6;
+    cursor: default;
+    transform: none;
+}
+
+/* Кнопки без класса .btn встречаются в готовых страницах корзины
+   и заказов. Оформляем их так же аккуратно, разметку не трогаем. */
+button {
+    font: inherit;
+    cursor: pointer;
+}
+
+button:not(.btn):not(.nav-toggle) {
+    padding: 8px 14px;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-card);
+    color: var(--color-text);
+    transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+button:not(.btn):not(.nav-toggle):hover {
+    border-color: #c9dfd0;
+    background: var(--color-accent-soft);
+    color: var(--color-accent-dark);
+}
+
+/* ------------------------------------------------------------------ */
+/* Формы                                                               */
+/* ------------------------------------------------------------------ */
+
 form p {
-    margin: 0 0 14px;
+    margin: 0 0 16px;
 }
 
 label {
     display: inline-block;
-    margin-bottom: 4px;
-    font-weight: bold;
+    margin-bottom: 6px;
+    color: var(--color-text);
+    font-size: 14px;
+    font-weight: 600;
 }
 
 input[type="text"],
@@ -313,16 +904,34 @@ input[type="number"],
 select,
 textarea {
     width: 100%;
-    max-width: 360px;
-    padding: 9px 10px;
+    max-width: 380px;
+    padding: 11px 13px;
     border: 1px solid var(--color-border);
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     background: #ffffff;
+    color: var(--color-text);
     font: inherit;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--color-accent);
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(47, 125, 79, 0.14);
 }
 
 input[type="number"] {
     max-width: 100px;
+}
+
+textarea {
+    min-height: 120px;
+    resize: vertical;
 }
 
 .inline-form {
@@ -330,25 +939,28 @@ input[type="number"] {
     margin-right: 8px;
 }
 
-/* Вход и регистрация */
+/* ------------------------------------------------------------------ */
+/* Вход и регистрация                                                  */
+/* ------------------------------------------------------------------ */
 
 /* Карточка авторизации уже, чем каталог: форма не должна растягиваться
    на всю ширину страницы, так её проще читать. */
 .auth-card {
-    max-width: 440px;
-    margin: 0 auto;
-    padding: 28px 28px 24px;
+    max-width: 460px;
+    margin: 20px auto;
+    padding: 36px 34px 30px;
     border-top: 4px solid var(--color-accent);
-    box-shadow: 0 4px 16px rgba(34, 34, 34, 0.06);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
 }
 
 .auth-title {
     margin-bottom: 6px;
-    font-size: 26px;
+    font-size: 30px;
 }
 
 .auth-subtitle {
-    margin: 0 0 20px;
+    margin: 0 0 22px;
     font-size: 15px;
 }
 
@@ -359,8 +971,6 @@ input[type="number"] {
 
 .auth-form label {
     display: block;
-    margin-bottom: 6px;
-    font-size: 15px;
 }
 
 .auth-form input[type="email"],
@@ -368,29 +978,23 @@ input[type="number"] {
 .auth-form input[type="text"] {
     width: 100%;
     max-width: none;
-    padding: 11px 12px;
-}
-
-.auth-form input:focus {
-    border-color: var(--color-accent);
-    outline: 2px solid #cfe6d8;
-    outline-offset: 1px;
+    padding: 12px 13px;
 }
 
 .auth-submit {
     width: 100%;
     margin-top: 4px;
-    padding: 12px 16px;
+    padding: 13px 16px;
     font-size: 16px;
 }
 
 .auth-switch {
-    margin: 20px 0 0;
-    padding-top: 16px;
+    margin: 22px 0 0;
+    padding-top: 18px;
     border-top: 1px solid var(--color-border);
-    text-align: center;
-    font-size: 15px;
     color: var(--color-muted);
+    font-size: 15px;
+    text-align: center;
 }
 
 /* Все ошибки регистрации собираются в один блок со списком. */
@@ -401,63 +1005,93 @@ input[type="number"] {
 
 .auth-errors p {
     margin: 0;
-    font-weight: bold;
+    font-weight: 700;
 }
 
-/* Таблицы и сообщения */
+/* ------------------------------------------------------------------ */
+/* Таблицы                                                             */
+/* ------------------------------------------------------------------ */
 
 table {
     width: 100%;
-    margin: 16px 0;
-    border-collapse: collapse;
+    margin: 20px 0;
+    overflow: hidden;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    border-collapse: separate;
+    border-spacing: 0;
     background: var(--color-card);
+    box-shadow: var(--shadow-sm);
 }
 
 th,
 td {
-    padding: 10px 12px;
-    border: 1px solid var(--color-border);
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--color-border);
     text-align: left;
-    vertical-align: top;
+    vertical-align: middle;
+}
+
+tr:last-child td {
+    border-bottom: none;
 }
 
 th {
-    background: #eef2ee;
+    background: #f2eee4;
+    color: var(--color-muted);
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 }
+
+/* Строка заголовка тоже является tr, поэтому подсвечиваем только
+   строки после неё. */
+tr:nth-child(n + 2):hover td {
+    background: #fbf8f1;
+}
+
+td form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0;
+}
+
+td input[type="number"] {
+    width: 76px;
+    max-width: 76px;
+    padding: 8px 9px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Сообщения                                                           */
+/* ------------------------------------------------------------------ */
 
 .notice,
 .error {
-    padding: 12px 14px;
-    margin: 0 0 18px;
-    border-radius: 6px;
+    padding: 14px 16px;
+    margin: 0 0 20px;
+    border: 1px solid;
+    border-left-width: 4px;
+    border-radius: var(--radius-sm);
 }
 
 .notice {
-    border: 1px solid #f0c36d;
+    border-color: #e3b85f;
     background: #fff8e6;
+    color: #6b4d12;
 }
 
 .error {
-    border: 1px solid #e0a0a0;
+    border-color: #d98b8b;
     background: #fff0f0;
     color: #8a2020;
 }
 
-/* Подвал */
-
-.site-footer {
-    padding: 20px 0;
-    border-top: 1px solid var(--color-border);
-    background: var(--color-card);
-    color: var(--color-muted);
-    font-size: 14px;
-
-    /* Дополнительная страховка на случай, если main закончился раньше окна. */
-    margin-top: auto;
-}
-
-/* Уведомления site.js (C5): прижаты к низу экрана, появление и
-   исчезание плавное, таймер 2500 мс управляется из JS. */
+/* Уведомления site.js (C5): прижаты к низу экрана, появляются и
+   исчезают плавно, таймер 2500 мс управляется из JS. */
 .site-toast {
     position: fixed;
     left: 50%;
@@ -465,11 +1099,12 @@ th {
     z-index: 1000;
     max-width: calc(100% - 32px);
     padding: 12px 20px;
-    border-radius: 8px;
+    border-radius: 999px;
     background: var(--color-accent-dark);
     color: #ffffff;
     font-size: 15px;
     text-align: center;
+    box-shadow: var(--shadow-md);
     opacity: 0;
     pointer-events: none;
     transform: translate(-50%, 12px);
@@ -485,31 +1120,223 @@ th {
     background: #8a2020;
 }
 
-/* Узкие экраны */
+/* ------------------------------------------------------------------ */
+/* Страницы 404 и 500                                                  */
+/* ------------------------------------------------------------------ */
 
-@media (max-width: 700px) {
-    .header-inner {
-        flex-direction: column;
-        align-items: flex-start;
-        padding-top: 12px;
-        padding-bottom: 12px;
+.empty-state {
+    max-width: 560px;
+    margin: 32px auto;
+    padding: 48px 32px;
+    border-radius: var(--radius-lg);
+    text-align: center;
+}
+
+.empty-code {
+    margin: 0 0 8px;
+    color: var(--color-accent);
+    font-family: var(--font-display);
+    font-size: 64px;
+    line-height: 1;
+}
+
+.empty-state--error .empty-code {
+    color: var(--color-danger);
+}
+
+.empty-state .page-title {
+    font-size: 26px;
+}
+
+.empty-state p {
+    margin: 0 0 22px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Подвал                                                              */
+/* ------------------------------------------------------------------ */
+
+.site-footer {
+    margin-top: auto;
+    padding: 34px 0;
+    background: #1f3a2a;
+    color: #e9e4d6;
+}
+
+.footer-inner {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.footer-logo {
+    color: #ffffff;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+}
+
+.footer-brand p {
+    margin: 4px 0 0;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 14px;
+}
+
+.footer-note {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.56);
+    font-size: 13px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Мягкое появление блоков                                             */
+/* ------------------------------------------------------------------ */
+
+/* Класс reveal-ready ставит site.js, только если браузер умеет
+   IntersectionObserver. Без JS блоки видны сразу. */
+html.reveal-ready [data-reveal] {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.5s ease, transform 0.3s ease, box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+html.reveal-ready [data-reveal].is-visible {
+    opacity: 1;
+    transform: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Узкие экраны                                                        */
+/* ------------------------------------------------------------------ */
+
+@media (max-width: 900px) {
+    .hero {
+        grid-template-columns: 1fr;
+        gap: 28px;
     }
 
-    .main-nav {
-        gap: 12px;
+    .hero-art {
+        min-height: 220px;
+    }
+
+    .hero-plate {
+        width: 180px;
+        height: 180px;
+    }
+
+    .hero-bowl {
+        width: 92px;
+        height: 92px;
+    }
+}
+
+@media (max-width: 860px) {
+    .nav-toggle {
+        display: inline-flex;
+    }
+
+    /* Меню превращается в выпадающую панель только когда JS готов.
+       Без JS ссылки остаются в шапке обычным переносом. */
+    .site-header.nav-ready .main-nav {
+        display: none;
+    }
+
+    .site-header.nav-ready.nav-open .main-nav {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        left: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 4px;
+        max-height: calc(100vh - 70px);
+        padding: 12px 20px 20px;
+        overflow-y: auto;
+        border-bottom: 1px solid var(--color-border);
+        background: var(--color-card);
+        box-shadow: 0 18px 32px rgba(36, 38, 31, 0.14);
+    }
+
+    .site-header.nav-ready.nav-open .main-nav a {
+        padding: 12px 14px;
+        border-radius: 12px;
+    }
+
+    .header-inner {
+        min-height: 66px;
+    }
+}
+
+@media (max-width: 700px) {
+    main {
+        padding: 26px 0 48px;
     }
 
     .page-title {
-        font-size: 24px;
+        font-size: 27px;
+    }
+
+    .hero {
+        margin-bottom: 40px;
+        padding: 26px 22px;
+        border-radius: var(--radius);
+    }
+
+    .hero-title {
+        font-size: 32px;
+    }
+
+    .hero-subtitle {
+        font-size: 16px;
+    }
+
+    .hero-chip {
+        font-size: 12px;
+    }
+
+    .hero-chip--three {
+        display: none;
     }
 
     .venue-grid,
     .dish-grid {
         grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .section-head {
+        display: block;
+    }
+
+    /* На телефоне таблицы прокручиваются по горизонтали внутри себя,
+       страница при этом не «уезжает» вбок. */
+    table {
+        display: block;
+        overflow-x: auto;
+        white-space: nowrap;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    th,
+    td {
+        padding: 10px 12px;
+    }
+
+    .auth-card {
+        padding: 26px 20px 22px;
+    }
+
+    .auth-title {
+        font-size: 26px;
     }
 
     .venue-menu {
         flex-direction: column;
+        gap: 16px;
     }
 
     .venue-menu-image {
@@ -517,15 +1344,33 @@ th {
         width: 100%;
     }
 
-    table {
-        font-size: 14px;
+    .site-toast {
+        bottom: 16px;
+        border-radius: var(--radius-sm);
     }
 
-    .auth-card {
-        padding: 22px 18px 20px;
+    .footer-inner {
+        display: block;
     }
 
-    .auth-title {
-        font-size: 23px;
+    .footer-note {
+        margin-top: 12px;
+    }
+}
+
+/* Уважаем системную настройку «меньше движения». */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    html.reveal-ready [data-reveal] {
+        opacity: 1;
+        transform: none;
     }
 }

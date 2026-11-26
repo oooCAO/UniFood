@@ -222,3 +222,122 @@
 
     document.addEventListener('submit', handleSubmit);
 })();
+
+/**
+ * Дополнительные улучшения оформления.
+ *
+ * Отдельный блок, чтобы не смешивать их с логикой корзины: мобильное
+ * меню, тень шапки, мягкое появление карточек и анимация счётчика.
+ * Все улучшения необязательны — без JS страницы работают как раньше.
+ */
+(function () {
+    'use strict';
+
+    var header = document.querySelector('.site-header');
+    var nav = document.getElementById('main-nav');
+    var navToggle = document.querySelector('.nav-toggle');
+
+    /* Мобильное меню. Кнопку показывает только скрипт: без JS ссылки
+       в шапке остаются видны обычным переносом. */
+    if (header && nav && navToggle) {
+        header.classList.add('nav-ready');
+        navToggle.hidden = false;
+
+        var setMenuState = function (isOpen) {
+            header.classList.toggle('nav-open', isOpen);
+            navToggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            navToggle.setAttribute('aria-label', isOpen ? 'Закрыть меню' : 'Открыть меню');
+        };
+
+        navToggle.addEventListener('click', function () {
+            setMenuState(!header.classList.contains('nav-open'));
+        });
+
+        // После перехода по ссылке меню на телефоне закрываем,
+        // иначе панель остаётся висеть поверх новой страницы.
+        nav.addEventListener('click', function (event) {
+            if (event.target && event.target.tagName === 'A') {
+                setMenuState(false);
+            }
+        });
+
+        // Escape закрывает меню — привычное поведение для клавиатуры.
+        document.addEventListener('keydown', function (event) {
+            if (event.key === 'Escape' && header.classList.contains('nav-open')) {
+                setMenuState(false);
+                navToggle.focus();
+            }
+        });
+
+        // При возврате на широкий экран выпадающая панель не нужна.
+        window.addEventListener('resize', function () {
+            if (window.innerWidth > 860) {
+                setMenuState(false);
+            }
+        });
+    }
+
+    /* Тень шапки после прокрутки: в начале страницы шапка лёгкая. */
+    if (header) {
+        var updateHeader = function () {
+            header.classList.toggle('is-scrolled', window.pageYOffset > 8);
+        };
+
+        updateHeader();
+        window.addEventListener('scroll', updateHeader, false);
+    }
+
+    /* Мягкое появление карточек при прокрутке. Если браузер не умеет
+       IntersectionObserver, блоки просто видны сразу. */
+    var revealItems = document.querySelectorAll('[data-reveal]');
+
+    if (revealItems.length && 'IntersectionObserver' in window) {
+        document.documentElement.classList.add('reveal-ready');
+
+        var revealObserver = new IntersectionObserver(function (entries) {
+            for (var i = 0; i < entries.length; i++) {
+                if (entries[i].isIntersecting) {
+                    entries[i].target.classList.add('is-visible');
+                    revealObserver.unobserve(entries[i].target);
+                }
+            }
+        }, { threshold: 0.12 });
+
+        for (var j = 0; j < revealItems.length; j++) {
+            revealObserver.observe(revealItems[j]);
+        }
+    }
+
+    /* Лёгкое «подпрыгивание» счётчика корзины, когда меняется число.
+       updateCartCount() выше меняет текст и атрибут hidden, поэтому
+       наблюдатель срабатывает и после AJAX-добавления. */
+    var cartCount = document.querySelector('[data-cart-count]');
+
+    if (cartCount && 'MutationObserver' in window) {
+        var bumpTimer = null;
+
+        var bumpCounter = function () {
+            cartCount.classList.remove('cart-count--bump');
+
+            // Принудительный reflow, чтобы анимация запустилась повторно
+            // при быстром добавлении нескольких блюд подряд.
+            void cartCount.offsetWidth;
+
+            cartCount.classList.add('cart-count--bump');
+
+            window.clearTimeout(bumpTimer);
+            bumpTimer = window.setTimeout(function () {
+                cartCount.classList.remove('cart-count--bump');
+            }, 400);
+        };
+
+        var counterObserver = new MutationObserver(bumpCounter);
+        counterObserver.observe(cartCount, {
+            childList: true,
+            characterData: true,
+            subtree: true,
+            attributes: true,
+            attributeFilter: ['hidden']
+        });
+    }
+})();
