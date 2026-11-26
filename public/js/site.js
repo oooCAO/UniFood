@@ -340,4 +340,23 @@
             attributeFilter: ['hidden']
         });
     }
+
+    /* Картинка меню заведения лежит на внешнем сайте и иногда отсутствует
+       (на market.grsu.by она появляется не каждый день). Битая картинка
+       с рамкой выглядит хуже, чем её отсутствие, поэтому прячем её. */
+    var venueImages = document.querySelectorAll('.venue-menu-image');
+
+    var handleVenueImageError = function (image) {
+        image.hidden = true;
+    };
+
+    for (var k = 0; k < venueImages.length; k++) {
+        if (venueImages[k].complete && venueImages[k].naturalWidth === 0) {
+            handleVenueImageError(venueImages[k]);
+        }
+
+        venueImages[k].addEventListener('error', function () {
+            handleVenueImageError(this);
+        });
+    }
 })();

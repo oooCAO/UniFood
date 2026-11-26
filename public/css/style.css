@@ -112,7 +112,10 @@ h4 {
     width: 100%;
     max-width: 1120px;
     margin: 0 auto;
-    padding: 0 20px;
+    /* Только боковые отступы: вертикальные задаёт сам main, а shorthand
+       padding обнулял бы их у страниц вида <main class="container">. */
+    padding-left: 20px;
+    padding-right: 20px;
 }
 
 /* ------------------------------------------------------------------ */
