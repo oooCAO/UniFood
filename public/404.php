@@ -26,9 +26,12 @@ http_response_code(404);
 <?php include __DIR__ . '/header.php'; ?>
 
 <main class="container">
-    <h1 class="page-title">Страница не найдена</h1>
-    <p class="text-muted">Возможно, ссылка устарела или блюдо больше не доступно.</p>
-    <p><a class="btn" href="/">На главную</a></p>
+    <section class="card empty-state">
+        <p class="empty-code">404</p>
+        <h1 class="page-title">Страница не найдена</h1>
+        <p class="text-muted">Возможно, ссылка устарела или блюдо больше не доступно.</p>
+        <p><a class="btn btn-primary" href="/">На главную</a></p>
+    </section>
 </main>
 
 <?php include __DIR__ . '/footer.php'; ?>

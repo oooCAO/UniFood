@@ -229,6 +229,12 @@ h4 {
     text-align: center;
 }
 
+/* При нуле счётчик скрыт атрибутом hidden, но display из правила выше
+   его перебивает — поэтому скрываем явно. */
+.cart-count[hidden] {
+    display: none;
+}
+
 /* Счётчик обновляет site.js: анимация только у текста, элемент
    не пересоздаётся, поэтому шапка не «дёргается». */
 .cart-count--bump {
@@ -979,6 +985,12 @@ textarea {
     width: 100%;
     max-width: none;
     padding: 12px 13px;
+}
+
+.auth-form input:focus {
+    border-color: var(--color-accent);
+    outline: 2px solid var(--color-accent-soft);
+    outline-offset: 1px;
 }
 
 .auth-submit {

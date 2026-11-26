@@ -71,17 +71,18 @@ $pageTitle = 'Блюдо — ' . $dishName . ' — UniFood';
 <body>
 <?php include __DIR__ . '/header.php'; ?>
 
-<main class="container">
-    <p><a href="/menu.php?venue=<?= (int) $dish['venue_id'] ?>">← Вернуться в меню</a></p>
+<main class="container dish-page">
+    <a class="back-link" href="/menu.php?venue=<?= (int) $dish['venue_id'] ?>">← Вернуться в меню</a>
 
+    <p class="venue-eyebrow">Блюдо</p>
     <h1 class="page-title"><?= htmlspecialchars($dishName) ?></h1>
 
     <article class="card dish-details">
-        <p class="text-muted">
+        <p class="text-muted dish-meta">
             Заведение: <a href="/menu.php?venue=<?= (int) $dish['venue_id'] ?>"><?= htmlspecialchars($venueName) ?></a>
             · Категория: <?= htmlspecialchars($categoryName) ?>
         </p>
-        <p><?= htmlspecialchars($dish['description']) ?></p>
+        <p class="dish-description"><?= htmlspecialchars($dish['description']) ?></p>
         <p class="dish-price"><?= formatPrice((float) $dish['price']) ?></p>
 
         <form method="post" action="/cart.php" data-cart-add>

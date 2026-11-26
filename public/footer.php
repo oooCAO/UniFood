@@ -3,11 +3,17 @@
  * Общий подвал сайта.
  *
  * Подключается страницами каталога после основного содержимого.
+ * Здесь же подключается site.js: скрипт отвечает только за оформление
+ * и не обязателен для работы страниц.
  */
 ?>
 <footer class="site-footer">
-    <div class="container">
-        <p>UniFood — предзаказ еды в столовых и кафе ГрГУ.</p>
+    <div class="container footer-inner">
+        <div class="footer-brand">
+            <span class="footer-logo">UniFood</span>
+            <p>Предзаказ еды в столовых и кафе ГрГУ.</p>
+        </div>
+        <p class="footer-note">© <?= date('Y') ?> UniFood · ГрГУ</p>
     </div>
 </footer>
 

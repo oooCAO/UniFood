@@ -57,16 +57,24 @@ $shownVenues = $venue !== null ? [$venue] : $venues;
 <body>
 <?php include __DIR__ . '/header.php'; ?>
 
-<main class="container">
-    <h1 class="page-title"><?= htmlspecialchars($pageTitle) ?></h1>
+<main class="container menu-page">
+    <a class="back-link" href="/">← К заведениям</a>
+
+    <?php if ($venue !== null): ?>
+        <header class="venue-head">
+            <p class="venue-eyebrow">Меню заведения</p>
+            <h1 class="page-title"><?= htmlspecialchars($venue['name']) ?></h1>
+            <p class="venue-address"><?= htmlspecialchars($venue['address']) ?></p>
+        </header>
+    <?php else: ?>
+        <h1 class="page-title">Меню</h1>
+    <?php endif; ?>
 
     <?php if ($catalogError !== ''): ?>
         <p class="error"><?= htmlspecialchars($catalogError) ?></p>
     <?php endif; ?>
 
     <?php if ($venue !== null): ?>
-        <p class="text-muted"><?= htmlspecialchars($venue['address']) ?></p>
-
         <?php if ($venue['menu_image_url'] !== null || $venue['menu_text'] !== ''): ?>
             <div class="venue-menu">
                 <?php if ($venue['menu_image_url'] !== null): ?>
@@ -98,7 +106,7 @@ $shownVenues = $venue !== null ? [$venue] : $venues;
                 <?php continue; ?>
             <?php endif; ?>
 
-            <section class="category-block">
+            <section class="category-block" data-reveal>
                 <h2 class="section-title"><?= htmlspecialchars($category['name']) ?></h2>
 
                 <div class="dish-grid">
